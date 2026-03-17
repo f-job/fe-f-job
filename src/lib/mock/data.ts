@@ -7,7 +7,7 @@ export const mockUsers = [
     id: 'user-seeker-1',
     phone: '0901234567',
     email: 'nguyenvana@example.com',
-    password_hash: '$mock$',
+    password_hash: '12345678',
     user_type: 'job_seeker',
     status: 'verified',
     created_at: '2025-01-15T08:00:00Z',

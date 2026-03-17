@@ -98,3 +98,4 @@ describe('POST /api/auth/verify-otp', () => {
     expect(data.code).toBe('VALIDATION_ERROR');
   });
 });
+
