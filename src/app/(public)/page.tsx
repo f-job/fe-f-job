@@ -6,8 +6,9 @@ import { getSession } from '@/lib/session';
 import type { JobCardProps } from '@/lib/types';
 import LoadMoreJobs from '@/components/LoadMoreJobs';
 import RecommendedJobs from '@/components/RecommendedJobs';
+import HeroSearch from '@/components/HeroSearch';
+import LocationTabs from '@/components/LocationTabs';
 
-// --- SEO Meta Tags ---
 export const metadata: Metadata = {
   title: 'F-Job - Tìm việc làm thời vụ tại Đà Nẵng',
   description:
@@ -25,7 +26,6 @@ export const metadata: Metadata = {
 
 const PAGE_SIZE = 12;
 
-// --- Data Fetching ---
 async function getFeaturedJobs(client: ReturnType<typeof createServerSupabaseClient>) {
   const { data, error } = await getJobs(client, { status: 'open', limit: PAGE_SIZE, offset: 0 });
   if (error || !data) return [];
@@ -68,16 +68,18 @@ async function getFeaturedJobs(client: ReturnType<typeof createServerSupabaseCli
 }
 
 async function getStatistics(client: ReturnType<typeof createServerSupabaseClient>) {
-  const [seekersResult, employersResult, completedResult] = await Promise.all([
+  const [seekersResult, employersResult, completedResult, openResult] = await Promise.all([
     client.from('job_seeker_profiles').select('id', { count: 'exact', head: true }),
     client.from('employer_profiles').select('id', { count: 'exact', head: true }),
     client.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
+    client.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'open'),
   ]);
 
   return {
     totalSeekers: seekersResult.count ?? 0,
     totalEmployers: employersResult.count ?? 0,
     completedJobs: completedResult.count ?? 0,
+    openJobs: openResult.count ?? 0,
   };
 }
 
@@ -89,7 +91,15 @@ async function getTotalOpenJobs(client: ReturnType<typeof createServerSupabaseCl
   return count ?? 0;
 }
 
-// --- Page Component ---
+const POPULAR_CATEGORIES = [
+  { label: 'Phục vụ sự kiện', icon: '🎪' },
+  { label: 'Nhà hàng/Khách sạn', icon: '🍽️' },
+  { label: 'Bán hàng', icon: '🛒' },
+  { label: 'Truyền thông', icon: '📢' },
+  { label: 'Hành chính', icon: '📋' },
+  { label: 'Kho vận', icon: '📦' },
+];
+
 export default async function LandingPage() {
   const client = createServerSupabaseClient();
 
@@ -100,126 +110,133 @@ export default async function LandingPage() {
     getSession(),
   ]);
 
+  const today = new Date().toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <HeroSection />
+      <section className="relative bg-gradient-to-br from-primary-600 via-primary-500 to-blue-400 pb-6 pt-28 sm:pt-32">
+        <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Title */}
+          <h1 className="mb-6 text-center text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
+            F-Job - Tìm việc làm thời vụ, Tuyển dụng hiệu quả
+          </h1>
 
-      {/* Statistics Section */}
-      <StatisticsSection
-        totalSeekers={stats.totalSeekers}
-        totalEmployers={stats.totalEmployers}
-        completedJobs={stats.completedJobs}
-      />
+          {/* Search Bar */}
+          <HeroSearch />
 
-      {/* Recommended Jobs Section (only for authenticated Job Seekers) */}
+          {/* Hero Content Grid */}
+          <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-12">
+            {/* Left: Popular Categories */}
+            <div className="rounded-xl bg-white/95 p-4 shadow-lg backdrop-blur lg:col-span-3">
+              <h3 className="mb-3 text-sm font-bold text-gray-700">Danh mục phổ biến</h3>
+              <ul className="space-y-1">
+                {POPULAR_CATEGORIES.map((cat) => (
+                  <li key={cat.label}>
+                    <Link
+                      href={`/viec-lam?category=${encodeURIComponent(cat.label)}`}
+                      className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-primary-50 hover:text-primary-700"
+                    >
+                      <span>{cat.icon}</span>
+                      <span>{cat.label}</span>
+                      <svg className="ml-auto h-4 w-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Center: Banner */}
+            <div className="flex flex-col gap-4 lg:col-span-6">
+              <div className="relative flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-primary-700 to-blue-600 p-6 text-white shadow-lg sm:p-8">
+                <div className="relative z-10">
+                  <h2 className="text-xl font-bold sm:text-2xl">Tiếp lợi thế,<br />nối thành công</h2>
+                  <p className="mt-2 max-w-sm text-sm text-primary-100">
+                    F-Job - Hệ sinh thái kết nối việc làm thời vụ hàng đầu tại Đà Nẵng
+                  </p>
+                  <Link
+                    href="/dang-ky/nguoi-tim-viec"
+                    className="mt-4 inline-flex items-center rounded-lg bg-white px-5 py-2 text-sm font-semibold text-primary-700 shadow transition-colors hover:bg-primary-50"
+                  >
+                    Tìm việc ngay
+                    <svg className="ml-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </Link>
+                </div>
+                {/* Decorative circles */}
+                <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10" />
+                <div className="absolute -bottom-6 -right-2 h-28 w-28 rounded-full bg-white/5" />
+              </div>
+            </div>
+
+            {/* Right: Stats Card */}
+            <div className="flex flex-col gap-4 lg:col-span-3">
+              <div className="rounded-xl bg-white/95 p-4 shadow-lg backdrop-blur">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="inline-flex items-center rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold text-primary-700">
+                    📊 Thị trường việc làm
+                  </span>
+                  <span className="text-xs text-gray-400">{today}</span>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Việc đang tuyển</span>
+                    <span className="text-lg font-bold text-primary-600">{stats.openJobs.toLocaleString('vi-VN')}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Việc đã hoàn thành</span>
+                    <span className="text-lg font-bold text-green-600">{stats.completedJobs.toLocaleString('vi-VN')}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Người tìm việc</span>
+                    <span className="text-lg font-bold text-blue-600">{stats.totalSeekers.toLocaleString('vi-VN')}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Nhà tuyển dụng</span>
+                    <span className="text-lg font-bold text-orange-500">{stats.totalEmployers.toLocaleString('vi-VN')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Recommended Jobs (authenticated job seekers only) */}
       <RecommendedJobs userType={session?.userType ?? null} />
 
       {/* Job Listings Section */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <h2 className="mb-6 text-2xl font-bold text-gray-900">
-          Việc làm mới nhất
-        </h2>
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
+            Việc làm tốt nhất
+          </h2>
+          <Link href="/viec-lam" className="text-sm font-semibold text-primary-600 hover:text-primary-700">
+            Xem tất cả →
+          </Link>
+        </div>
+
+        {/* Location filter tabs */}
+        <LocationTabs />
+
+        {/* Hint */}
+        <div className="mb-5 flex items-center gap-2 rounded-lg bg-yellow-50 px-4 py-2 text-sm text-yellow-700">
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Gợi ý: Bấm vào tiêu đề việc làm để xem thêm thông tin chi tiết</span>
+        </div>
+
         <LoadMoreJobs initialJobs={featuredJobs} totalCount={totalOpenJobs} />
       </section>
     </main>
-  );
-}
-
-// --- HeroSection ---
-function HeroSection() {
-  return (
-    <section className="bg-gradient-to-br from-primary-600 to-primary-800 px-4 py-16 text-center text-white sm:py-24">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
-          Kết nối việc làm thời vụ
-          <br />
-          nhanh chóng và uy tín
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-base text-primary-100 sm:mt-6 sm:text-lg">
-          F-Job giúp sinh viên và người lao động tìm việc thời vụ tại Đà Nẵng.
-          Nhà tuyển dụng dễ dàng tìm người phù hợp cho sự kiện của bạn.
-        </p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-          <Link
-            href="/dang-ky/nguoi-tim-viec"
-            className="inline-flex w-full items-center justify-center rounded-lg bg-white px-6 py-3
-              text-sm font-semibold text-primary-700 shadow-sm transition-colors
-              hover:bg-primary-50 sm:w-auto sm:text-base"
-          >
-            Tìm Việc Ngay
-          </Link>
-          <Link
-            href="/dang-ky/nha-tuyen-dung"
-            className="inline-flex w-full items-center justify-center rounded-lg border-2 border-white
-              px-6 py-3 text-sm font-semibold text-white transition-colors
-              hover:bg-white/10 sm:w-auto sm:text-base"
-          >
-            Tuyển Người
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// --- Statistics Section ---
-function StatisticsSection({
-  totalSeekers,
-  totalEmployers,
-  completedJobs,
-}: {
-  totalSeekers: number;
-  totalEmployers: number;
-  completedJobs: number;
-}) {
-  const stats = [
-    { label: 'Người tìm việc', value: totalSeekers, icon: UserIcon },
-    { label: 'Nhà tuyển dụng', value: totalEmployers, icon: BuildingIcon },
-    { label: 'Việc đã hoàn thành', value: completedJobs, icon: CheckIcon },
-  ];
-
-  return (
-    <section className="border-b border-gray-100 bg-gray-50 px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-3">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="flex flex-col items-center rounded-xl bg-white p-6 shadow-sm"
-          >
-            <stat.icon />
-            <span className="mt-3 text-2xl font-bold text-primary-700 sm:text-3xl">
-              {stat.value.toLocaleString('vi-VN')}
-            </span>
-            <span className="mt-1 text-sm text-gray-500">{stat.label}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// --- Icons ---
-function UserIcon() {
-  return (
-    <svg className="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-    </svg>
-  );
-}
-
-function BuildingIcon() {
-  return (
-    <svg className="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg className="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
   );
 }

@@ -32,7 +32,7 @@ export default function Header({ user }: Props) {
   // Nếu ở trang khác: Luôn hiện nền trắng mờ để không bị mất chữ.
   const headerStyles = (isScrolled || !isHomePage)
     ? 'border-b border-gray-200/50 bg-white/80 backdrop-blur-xl py-3 shadow-sm'
-    : 'bg-transparent py-5';
+    : 'bg-transparent backdrop-blur-none py-5';
 
   const navLinkStyles = (isScrolled || !isHomePage)
     ? 'text-gray-700 hover:text-primary-600'
@@ -57,7 +57,7 @@ export default function Header({ user }: Props) {
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          {['Tìm việc làm', 'Công ty', 'Cẩm nang'].map((item) => (
+          {['Việc làm', 'Công cụ', 'Cẩm nang nghề nghiệp'].map((item) => (
             <Link 
               key={item} 
               href="#" 
@@ -81,13 +81,19 @@ export default function Header({ user }: Props) {
               </Link>
               <Link
                 href="/dang-ky/nguoi-tim-viec"
-                className={`rounded-full px-6 py-2 text-sm font-bold shadow-lg transition-all duration-300 active:scale-95 ${
+                className={`rounded-full px-5 py-2 text-sm font-bold shadow-lg transition-all duration-300 active:scale-95 ${
                   (isScrolled || !isHomePage)
                     ? 'bg-primary-600 text-white hover:bg-primary-700' 
                     : 'bg-white text-primary-600 hover:bg-gray-100'
                 }`}
               >
-                Đăng ký ngay
+                Đăng ký
+              </Link>
+              <Link
+                href="/dang-ky/nha-tuyen-dung"
+                className={`hidden text-sm font-bold transition-colors lg:block ${navLinkStyles}`}
+              >
+                Đăng tuyển &amp; tìm hồ sơ
               </Link>
             </div>
           ) : (
