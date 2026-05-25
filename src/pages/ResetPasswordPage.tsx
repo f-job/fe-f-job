@@ -10,9 +10,9 @@ import toast from 'react-hot-toast';
 const schema = z.object({
   email: z.string().email('Email không hợp lệ'),
   token: z.string().min(1, 'Vui lòng nhập mã xác nhận'),
-  newPassword: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
+  password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
   confirmPassword: z.string(),
-}).refine((data) => data.newPassword === data.confirmPassword, {
+}).refine((data) => data.password === data.confirmPassword, {
   message: 'Mật khẩu xác nhận không khớp',
   path: ['confirmPassword'],
 });
@@ -30,11 +30,7 @@ export default function ResetPasswordPage() {
   const onSubmit = async (data: ResetForm) => {
     setIsLoading(true);
     try {
-      await authService.resetPassword({
-        email: data.email,
-        token: data.token,
-        newPassword: data.newPassword,
-      });
+      await authService.resetPassword(data.email, data.token, data.password);
       setSuccess(true);
       toast.success('Đặt lại mật khẩu thành công!');
     } catch (err: any) {
@@ -50,7 +46,7 @@ export default function ResetPasswordPage() {
         <Col md={5}>
           <div className="text-center mb-4">
             <h2 className="fw-bold">Đặt lại mật khẩu</h2>
-            <p className="text-muted">Nhập thông tin để đặt lại mật khẩu</p>
+            <p className="text-muted">Nhập email, token từ email và mật khẩu mới</p>
           </div>
 
           {success ? (
@@ -64,7 +60,7 @@ export default function ResetPasswordPage() {
                 <Form.Label>Email</Form.Label>
                 <Form.Control
                   type="email"
-                  placeholder="name@example.com"
+                  placeholder="Nhập email của bạn"
                   {...register('email')}
                   isInvalid={!!errors.email}
                 />
@@ -74,10 +70,10 @@ export default function ResetPasswordPage() {
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Label>Mã xác nhận (từ email)</Form.Label>
+                <Form.Label>Mã xác nhận</Form.Label>
                 <Form.Control
                   type="text"
-                  placeholder="Nhập mã token từ email"
+                  placeholder="Nhập token từ email"
                   {...register('token')}
                   isInvalid={!!errors.token}
                 />
@@ -91,11 +87,11 @@ export default function ResetPasswordPage() {
                 <Form.Control
                   type="password"
                   placeholder="Ít nhất 8 ký tự"
-                  {...register('newPassword')}
-                  isInvalid={!!errors.newPassword}
+                  {...register('password')}
+                  isInvalid={!!errors.password}
                 />
                 <Form.Control.Feedback type="invalid">
-                  {errors.newPassword?.message}
+                  {errors.password?.message}
                 </Form.Control.Feedback>
               </Form.Group>
 

@@ -40,11 +40,17 @@ export function AppNavbar() {
                   className="d-flex align-items-center gap-2 border-0"
                 >
                   <i className="bi bi-person-circle"></i>
-                  <span className="fw-500">{user.fullName}</span>
+                  <span className="fw-500">{user.name ?? user.fullName ?? user.email}</span>
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
                   <Dropdown.Item as={Link} to="/ho-so">
                     <i className="bi bi-person me-2"></i>Hồ sơ
+                  </Dropdown.Item>
+                  <Dropdown.Item as={Link} to="/admin/users">
+                    <i className="bi bi-people me-2"></i>Quản lý users
+                  </Dropdown.Item>
+                  <Dropdown.Item as={Link} to="/admin/monitoring">
+                    <i className="bi bi-activity me-2"></i>Monitoring
                   </Dropdown.Item>
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={handleLogout}>

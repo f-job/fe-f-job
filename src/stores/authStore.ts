@@ -1,12 +1,6 @@
 import { create } from 'zustand';
-import authService from '@services/authService';
-
-interface AuthUser {
-  id: string;
-  email: string;
-  fullName: string;
-  role: string;
-}
+import authService, { AuthUser } from '@services/authService';
+import socialProviderService from '@services/socialProviderService';
 
 interface AuthState {
   user: AuthUser | null;
@@ -16,9 +10,28 @@ interface AuthState {
   isLoading: boolean;
 
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  loginWithFacebook: () => Promise<void>;
   register: (email: string, fullName: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   loadFromStorage: () => void;
+}
+
+function normalizeUser(user: AuthUser): AuthUser {
+  const displayName = user.name ?? user.fullName ?? user.email;
+  return {
+    ...user,
+    name: displayName,
+    fullName: displayName,
+  };
+}
+
+function persistAuth(data: { accessToken: string; refreshToken: string; user: AuthUser }) {
+  const user = normalizeUser(data.user);
+  localStorage.setItem('accessToken', data.accessToken);
+  localStorage.setItem('refreshToken', data.refreshToken);
+  localStorage.setItem('user', JSON.stringify(user));
+  return user;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -35,7 +48,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     if (accessToken && refreshToken && userStr) {
       try {
-        const user = JSON.parse(userStr) as AuthUser;
+        const user = normalizeUser(JSON.parse(userStr) as AuthUser);
+        localStorage.setItem('user', JSON.stringify(user));
         set({ user, accessToken, refreshToken, isAuthenticated: true });
       } catch {
         localStorage.removeItem('accessToken');
@@ -49,11 +63,47 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true });
     try {
       const { data } = await authService.login({ email, password });
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      const user = persistAuth(data);
       set({
-        user: data.user,
+        user,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  loginWithGoogle: async () => {
+    set({ isLoading: true });
+    try {
+      const token = await socialProviderService.getGoogleIdToken();
+      const { data } = await authService.loginWithGoogle(token);
+      const user = persistAuth(data);
+      set({
+        user,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  loginWithFacebook: async () => {
+    set({ isLoading: true });
+    try {
+      const token = await socialProviderService.getFacebookAccessToken();
+      const { data } = await authService.loginWithFacebook(token);
+      const user = persistAuth(data);
+      set({
+        user,
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
         isAuthenticated: true,

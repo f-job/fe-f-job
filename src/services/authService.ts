@@ -8,24 +8,27 @@ export interface LoginPayload {
 export interface RegisterPayload {
   email: string;
   fullName?: string;
+  name?: string;
   password: string;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name?: string;
+  fullName?: string;
+  role: string;
 }
 
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: string;
-  };
+  user: AuthUser;
 }
 
 export interface ResetPasswordPayload {
-  email: string;
   token: string;
-  newPassword: string;
+  password: string;
 }
 
 const authService = {
@@ -34,7 +37,11 @@ const authService = {
   },
 
   register(payload: RegisterPayload) {
-    return api.post('/auth/register', payload);
+    return api.post('/auth/signup', {
+      email: payload.email,
+      name: payload.name ?? payload.fullName,
+      password: payload.password,
+    });
   },
 
   refresh(refreshToken: string) {
@@ -45,16 +52,28 @@ const authService = {
     return api.post('/auth/logout');
   },
 
+  verifyEmail(token: string) {
+    return api.get(`/auth/verify-email/${token}`);
+  },
+
+  resendVerification(email: string) {
+    return api.post('/auth/send-email-verification', { email });
+  },
+
   forgotPassword(email: string) {
     return api.post('/auth/forgot-password', { email });
   },
 
-  resetPassword(payload: ResetPasswordPayload) {
-    return api.post('/auth/reset-password', payload);
+  resetPassword(email: string, token: string, newPassword: string) {
+    return api.post('/auth/reset-password', { email, token, newPassword });
   },
 
-  getMe() {
-    return api.get('/auth/me');
+  loginWithGoogle(token: string) {
+    return api.post<AuthResponse>('/auth/oauth/google', { token });
+  },
+
+  loginWithFacebook(token: string) {
+    return api.post<AuthResponse>('/auth/oauth/facebook', { token });
   },
 };
 

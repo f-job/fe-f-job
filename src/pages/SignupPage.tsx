@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuthStore } from '@stores/authStore';
+import { SocialLoginButtons } from '@components/auth/SocialLoginButtons';
 import toast from 'react-hot-toast';
 
 const signupSchema = z.object({
@@ -112,6 +113,8 @@ export default function SignupPage() {
               {isLoading ? <Spinner size="sm" /> : 'Đăng ký'}
             </Button>
           </Form>
+
+          <SocialLoginButtons mode="signup" />
 
           <p className="text-center mt-4 text-muted">
             Đã có tài khoản?{' '}
