@@ -46,12 +46,29 @@ export function AppNavbar() {
                   <Dropdown.Item as={Link} to="/ho-so">
                     <i className="bi bi-person me-2"></i>Hồ sơ
                   </Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/admin/users">
-                    <i className="bi bi-people me-2"></i>Quản lý users
-                  </Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/admin/monitoring">
-                    <i className="bi bi-activity me-2"></i>Monitoring
-                  </Dropdown.Item>
+                  {user.role === 'CANDIDATE' && (
+                    <Dropdown.Item as={Link} to="/don-ung-tuyen">
+                      <i className="bi bi-file-earmark-text me-2"></i>Đơn ứng tuyển
+                    </Dropdown.Item>
+                  )}
+                  {user.role === 'ADMIN' && (
+                    <>
+                      <Dropdown.Divider />
+                      <Dropdown.Header>Quản trị</Dropdown.Header>
+                      <Dropdown.Item as={Link} to="/admin/users">
+                        <i className="bi bi-people me-2"></i>Quản lý users
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/admin/candidates">
+                        <i className="bi bi-person-badge me-2"></i>Ứng viên
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/admin/employers">
+                        <i className="bi bi-building me-2"></i>Nhà tuyển dụng
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/admin/monitoring">
+                        <i className="bi bi-activity me-2"></i>Monitoring
+                      </Dropdown.Item>
+                    </>
+                  )}
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={handleLogout}>
                     <i className="bi bi-box-arrow-right me-2"></i>Đăng xuất

@@ -31,6 +31,26 @@ export interface ResetPasswordPayload {
   password: string;
 }
 
+export interface RegisterCandidatePayload {
+  email: string;
+  password: string;
+  fullName: string;
+  phone?: string;
+  address?: string;
+  resumeUrl?: string;
+}
+
+export interface RegisterEmployerPayload {
+  email: string;
+  password: string;
+  companyName: string;
+  companyDescription?: string;
+  website?: string;
+  industry?: string;
+  companySize?: string;
+  address?: string;
+}
+
 const authService = {
   login(payload: LoginPayload) {
     return api.post<AuthResponse>('/auth/login', payload);
@@ -42,6 +62,18 @@ const authService = {
       name: payload.name ?? payload.fullName,
       password: payload.password,
     });
+  },
+
+  registerCandidate(payload: RegisterCandidatePayload) {
+    return api.post<{ message: string }>('/auth/register/candidate', payload);
+  },
+
+  registerEmployer(payload: RegisterEmployerPayload) {
+    return api.post<{ message: string }>('/auth/register/employer', payload);
+  },
+
+  getMe() {
+    return api.get<AuthUser>('/auth/me');
   },
 
   refresh(refreshToken: string) {

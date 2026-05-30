@@ -1,5 +1,9 @@
 import { create } from 'zustand';
-import authService, { AuthUser } from '@services/authService';
+import authService, {
+  AuthUser,
+  RegisterCandidatePayload,
+  RegisterEmployerPayload,
+} from '@services/authService';
 import socialProviderService from '@services/socialProviderService';
 
 interface AuthState {
@@ -13,6 +17,9 @@ interface AuthState {
   loginWithGoogle: () => Promise<void>;
   loginWithFacebook: () => Promise<void>;
   register: (email: string, fullName: string, password: string) => Promise<void>;
+  registerCandidate: (payload: RegisterCandidatePayload) => Promise<void>;
+  registerEmployer: (payload: RegisterEmployerPayload) => Promise<void>;
+  setAuth: (accessToken: string, refreshToken: string, user: AuthUser) => void;
   logout: () => Promise<void>;
   loadFromStorage: () => void;
 }
@@ -124,6 +131,43 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ isLoading: false });
       throw error;
     }
+  },
+
+  registerCandidate: async (payload: RegisterCandidatePayload) => {
+    set({ isLoading: true });
+    try {
+      // Backend returns only a confirmation message (no tokens) — caller should
+      // redirect to the login page after a successful registration.
+      await authService.registerCandidate(payload);
+      set({ isLoading: false });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  registerEmployer: async (payload: RegisterEmployerPayload) => {
+    set({ isLoading: true });
+    try {
+      // Employer accounts are created in PENDING_APPROVAL status and return only
+      // a confirmation message — redirect to login after success.
+      await authService.registerEmployer(payload);
+      set({ isLoading: false });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  setAuth: (accessToken: string, refreshToken: string, authUser: AuthUser) => {
+    const user = persistAuth({ accessToken, refreshToken, user: authUser });
+    set({
+      user,
+      accessToken,
+      refreshToken,
+      isAuthenticated: true,
+      isLoading: false,
+    });
   },
 
   logout: async () => {

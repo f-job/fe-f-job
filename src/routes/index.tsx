@@ -12,7 +12,12 @@ const ForgotPasswordPage = lazy(() => import('@pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('@pages/ResetPasswordPage'));
 const VerifyEmailPage = lazy(() => import('@pages/VerifyEmailPage'));
 const ResendVerificationPage = lazy(() => import('@pages/ResendVerificationPage'));
+const JobsPage = lazy(() => import('@pages/JobsPage'));
+const JobDetailPage = lazy(() => import('@pages/JobDetailPage'));
+const MyApplicationsPage = lazy(() => import('@pages/MyApplicationsPage'));
 const AdminUsersPage = lazy(() => import('@pages/AdminUsersPage'));
+const AdminCandidatesPage = lazy(() => import('@pages/AdminCandidatesPage'));
+const AdminEmployersPage = lazy(() => import('@pages/AdminEmployersPage'));
 const MonitoringPage = lazy(() => import('@pages/MonitoringPage'));
 const FacebookCallbackPage = lazy(() => import('@pages/FacebookCallbackPage'));
 const FacebookSuccessPage = lazy(() => import('@pages/FacebookSuccessPage'));
@@ -32,6 +37,16 @@ export const routes: RouteObject[] = [
     element: <MainLayout />,
     children: [
       { index: true, element: withSuspense(HomePage) },
+      { path: 'viec-lam', element: withSuspense(JobsPage) },
+      { path: 'viec-lam/:id', element: withSuspense(JobDetailPage) },
+      {
+        path: 'don-ung-tuyen',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(MyApplicationsPage)}
+          </ProtectedRoute>
+        ),
+      },
       { path: 'dang-nhap', element: withSuspense(LoginPage) },
       { path: 'dang-ky', element: withSuspense(SignupPage) },
       { path: 'quen-mat-khau', element: withSuspense(ForgotPasswordPage) },
@@ -50,6 +65,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Navigate to="users" replace /> },
       { path: 'users', element: withSuspense(AdminUsersPage) },
+      { path: 'candidates', element: withSuspense(AdminCandidatesPage) },
+      { path: 'employers', element: withSuspense(AdminEmployersPage) },
       { path: 'monitoring', element: withSuspense(MonitoringPage) },
     ],
   },

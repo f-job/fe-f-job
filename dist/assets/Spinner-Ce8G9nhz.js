@@ -1,0 +1,1 @@
+import{A as e,D as t,L as n,M as r,R as i}from"./index-DRUFDgjY.js";var a=i(e()),o=i(n()),s=r(),c=o.forwardRef(({bsPrefix:e,variant:n,animation:r=`border`,size:i,as:o=`div`,className:c,...l},u)=>{e=t(e,`spinner`);let d=`${e}-${r}`;return(0,s.jsx)(o,{ref:u,...l,className:(0,a.default)(c,d,i&&`${d}-${i}`,n&&`text-${n}`)})});c.displayName=`Spinner`;export{c as t};

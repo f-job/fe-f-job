@@ -1,4 +1,5 @@
 import { Container } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import { quickTags } from '@/data/mockData';
 
 export function QuickTags() {
@@ -7,15 +8,14 @@ export function QuickTags() {
       <Container>
         <div className="d-flex flex-wrap gap-2 justify-content-center">
           {quickTags.map((tag) => (
-            <a
+            <Link
               key={tag}
-              href="#"
+              to={`/viec-lam?keyword=${encodeURIComponent(tag)}`}
               className="quick-tag"
-              onClick={(e) => e.preventDefault()}
             >
               <i className="bi bi-tag me-1" />
               {tag}
-            </a>
+            </Link>
           ))}
         </div>
       </Container>

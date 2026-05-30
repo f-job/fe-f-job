@@ -13,6 +13,12 @@ export default function AdminLayout() {
             <Nav.Link as={NavLink} to="/admin/users">
               Users
             </Nav.Link>
+            <Nav.Link as={NavLink} to="/admin/candidates">
+              Ứng viên
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/admin/employers">
+              Nhà tuyển dụng
+            </Nav.Link>
             <Nav.Link as={NavLink} to="/admin/monitoring">
               Monitoring
             </Nav.Link>
