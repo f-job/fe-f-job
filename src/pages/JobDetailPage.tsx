@@ -17,8 +17,14 @@ import toast from 'react-hot-toast';
 import jobService from '@services/jobService';
 import applicationService from '@services/applicationService';
 import employerService from '@services/employerService';
+import ReportModal from '@components/common/ReportModal';
 import { useAuthStore } from '@stores/authStore';
-import type { BackendJob, CreateApplicationPayload, CvType } from '@/types/api';
+import type {
+  BackendJob,
+  CreateApplicationPayload,
+  CvType,
+  ReportTargetType,
+} from '@/types/api';
 import { formatDate, formatSalary, getErrorMessage, getRefId } from '@utils/format';
 
 interface ApplyForm {
@@ -40,6 +46,21 @@ export default function JobDetailPage() {
   const [showApply, setShowApply] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
+
+  // Report modal: a single config drives the shared ReportModal for both the
+  // JOB target (this posting) and the USER target (the employer's account).
+  const [showReport, setShowReport] = useState(false);
+  const [reportConfig, setReportConfig] = useState<{
+    targetType: ReportTargetType;
+    targetId: string;
+    targetLabel?: string;
+  } | null>(null);
+  // The employer's USER id, resolved from job.employerId (an EmployerProfile)
+  // via GET /employers/id/:id — the same resolution handleContactEmployer uses.
+  // We resolve it up-front so we can (a) target a USER report at the employer
+  // and (b) hide the report control when the employer is the current user
+  // (Req 10.8 self-report rule, surfaced in the UI).
+  const [employerUserId, setEmployerUserId] = useState<string | null>(null);
 
   const { register, handleSubmit, watch, reset } = useForm<ApplyForm>({
     defaultValues: { cvType: 'online', cvPdfUrl: '', coverLetter: '' },
@@ -69,6 +90,27 @@ export default function JobDetailPage() {
     }
   }, [id, isAuthenticated, isCandidate]);
 
+  /**
+   * Resolve the employer's USER id (job.employerId is an EmployerProfile id),
+   * mirroring handleContactEmployer's GET /employers/id/:id lookup. We only do
+   * this when authenticated, and we use it to decide whether to offer a
+   * USER-target "report employer" control — hiding it when the employer is the
+   * current user (self-report rule, Req 10.8). Failures are non-blocking: the
+   * USER report control simply stays hidden.
+   */
+  const resolveEmployerUserId = useCallback(async () => {
+    if (!isAuthenticated || !job) {
+      setEmployerUserId(null);
+      return;
+    }
+    try {
+      const { data: employer } = await employerService.getById(job.employerId);
+      setEmployerUserId(getRefId(employer.userId) || null);
+    } catch {
+      setEmployerUserId(null);
+    }
+  }, [isAuthenticated, job]);
+
   useEffect(() => {
     loadJob();
   }, [loadJob]);
@@ -76,6 +118,32 @@ export default function JobDetailPage() {
   useEffect(() => {
     checkApplied();
   }, [checkApplied]);
+
+  useEffect(() => {
+    resolveEmployerUserId();
+  }, [resolveEmployerUserId]);
+
+  const openJobReport = () => {
+    if (!job) return;
+    setReportConfig({ targetType: 'JOB', targetId: id, targetLabel: job.title });
+    setShowReport(true);
+  };
+
+  const openEmployerReport = () => {
+    if (!employerUserId) return;
+    setReportConfig({
+      targetType: 'USER',
+      targetId: employerUserId,
+      targetLabel: job?.companyName,
+    });
+    setShowReport(true);
+  };
+
+  // Show the USER-target "report employer" control only when we have resolved
+  // the employer's user id AND it differs from the current user's id — never
+  // offer a self-report (Req 10.8).
+  const canReportEmployer =
+    isAuthenticated && !!employerUserId && employerUserId !== user?.id;
 
   const handleApplyClick = () => {
     if (!isAuthenticated) {
@@ -268,6 +336,30 @@ export default function JobDetailPage() {
                 <i className="bi bi-chat-dots me-2" />
                 {startingChat ? 'Đang mở...' : 'Nhắn tin với NTD'}
               </Button>
+              {isAuthenticated && (
+                <>
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    className="w-100 mt-2"
+                    onClick={openJobReport}
+                  >
+                    <i className="bi bi-flag me-2" />
+                    Báo cáo
+                  </Button>
+                  {canReportEmployer && (
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      className="w-100 mt-2"
+                      onClick={openEmployerReport}
+                    >
+                      <i className="bi bi-flag me-2" />
+                      Báo cáo người dùng
+                    </Button>
+                  )}
+                </>
+              )}
               {!isAuthenticated && (
                 <small className="text-muted d-block mt-2 text-center">
                   Bạn cần đăng nhập để ứng tuyển.
@@ -325,6 +417,16 @@ export default function JobDetailPage() {
           </Modal.Footer>
         </Form>
       </Modal>
+
+      {reportConfig && (
+        <ReportModal
+          show={showReport}
+          targetType={reportConfig.targetType}
+          targetId={reportConfig.targetId}
+          targetLabel={reportConfig.targetLabel}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </Container>
   );
 }

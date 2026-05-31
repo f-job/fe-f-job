@@ -199,7 +199,9 @@ export type ApplicationStatus =
   | 'Scheduled'
   | 'Accepted'
   | 'Rejected'
-  | 'Withdrawn';
+  | 'Withdrawn'
+  | 'Completed'
+  | 'NoShow';
 
 export type CvType = 'online' | 'pdf' | 'quick';
 
@@ -663,4 +665,217 @@ export function jobStatusVariant(status: JobStatus): string {
     case 'expired': return 'danger';
     default: return 'secondary';
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Trust & Safety
+//   Reviews & Trust Score · Candidate Verification · Reports & Moderation · Audit
+//   Mirrors the be-f-job trust-and-safety controllers. Timestamps arrive as ISO
+//   strings over HTTP (Mongoose `Date` serialised by the JSON transport).
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─── Reviews & Trust Score (prefix /reviews, /profiles/:id/trust) ────────────
+
+/** Direction of a review — who is reviewing whom for a completed application. */
+export type ReviewDirection = 'CANDIDATE_TO_EMPLOYER' | 'EMPLOYER_TO_CANDIDATE';
+
+/** Payload for POST /reviews — rating (1–5) + optional comment for a Completed application. */
+export interface CreateReviewPayload {
+  applicationId: string;
+  /** Integer 1–5 inclusive. */
+  rating: number;
+  /** Optional, ≤1000 characters. */
+  comment?: string;
+}
+
+/** A single review as surfaced on the public reviewee list (GET /reviews). */
+export interface ReviewView {
+  id: string;
+  rating: number;
+  /** Empty string when the reviewer left no comment. */
+  comment: string;
+  reviewerDisplayName: string;
+  createdAt: string;
+  direction: ReviewDirection;
+}
+
+/** Aggregate trust read returned by GET /profiles/:userId/trust. */
+export interface TrustView {
+  /** Persisted Trust Score, 0–100. */
+  trustScore: number;
+  /** Mean of visible ratings, one decimal place (0 when no visible reviews). */
+  averageRating: number;
+  reviewCount: number;
+  /** True while the reviewee has fewer than 3 visible reviews. */
+  provisional: boolean;
+  /** Composed Verified_Badge — candidate VERIFIED or employer APPROVED. */
+  verified: boolean;
+}
+
+/** Full review document returned by the admin moderation list (GET /admin/reviews). */
+export interface AdminReview {
+  _id: string;
+  id?: string;
+  applicationId: string;
+  reviewerId: string;
+  revieweeId: string;
+  direction: ReviewDirection;
+  jobId: string;
+  rating: number;
+  comment: string;
+  hidden: boolean;
+  moderatedBy?: string;
+  moderationReason?: string;
+  moderatedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Query params for the admin review moderation list (GET /admin/reviews). */
+export interface AdminReviewsQuery {
+  revieweeId?: string;
+  /** `true` → only hidden, `false` → only visible, omit → both. */
+  hidden?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+// ─── Candidate Verification (prefix /verification, /admin/verifications) ─────
+
+export type VerificationStatus =
+  | 'UNVERIFIED'
+  | 'PENDING_REVIEW'
+  | 'VERIFIED'
+  | 'REJECTED';
+
+/** A single identity-document reference submitted in a verification request. */
+export interface IdentityDocumentPayload {
+  fileUrl: string;
+  fileName: string;
+  /** One of image/jpeg, image/png, application/pdf. */
+  mimeType: string;
+  /** Size in bytes, ≤10 MB (10 * 1024 * 1024). */
+  fileSize: number;
+}
+
+/** A stored identity document (embedded subdocument with its own id + timestamps). */
+export interface IdentityDocument extends IdentityDocumentPayload {
+  _id?: string;
+  id?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Payload for POST /verification/submit — 1–5 identity documents. */
+export interface SubmitVerificationPayload {
+  documents: IdentityDocumentPayload[];
+}
+
+/** Candidate-facing verification read model (GET /verification/me, submit response). */
+export interface VerificationView {
+  verificationStatus: VerificationStatus;
+  identityDocuments: IdentityDocument[];
+  verificationSubmittedAt?: string;
+  verifiedAt?: string;
+  verificationRejectedReason?: string;
+}
+
+/** A single entry in the admin verification queue (GET /admin/verifications). */
+export interface VerificationQueueItem {
+  userId: string;
+  fullName: string;
+  verificationSubmittedAt?: string;
+  documentCount: number;
+}
+
+// ─── Reports & Moderation (prefix /reports, /admin/reports) ──────────────────
+
+export type ReportTargetType = 'JOB' | 'USER';
+
+export type ReportStatus = 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED' | 'DISMISSED';
+
+export type ReportReason =
+  | 'SCAM'
+  | 'FAKE_JOB'
+  | 'ABUSE'
+  | 'HARASSMENT'
+  | 'INAPPROPRIATE'
+  | 'SPAM'
+  | 'OTHER';
+
+/** Payload for POST /reports — file a report against a JOB or USER. */
+export interface CreateReportPayload {
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: ReportReason;
+  /** Optional, ≤1000 characters. */
+  description?: string;
+}
+
+/** A report document as persisted/returned by the backend. */
+export interface Report {
+  _id: string;
+  id?: string;
+  reporterId: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: ReportReason;
+  description: string;
+  status: ReportStatus;
+  /** Denormalised active flag (true while OPEN/UNDER_REVIEW). */
+  active?: boolean;
+  assignedAdminId?: string;
+  assignedAt?: string;
+  resolvedBy?: string;
+  resolvedAt?: string;
+  resolutionReason?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Alias mirroring the backend `ReportDocument` returned by report endpoints. */
+export type ReportView = Report;
+
+/** Query params for the admin report queue (GET /admin/reports). */
+export interface ReportQueueQuery {
+  status?: ReportStatus;
+  targetType?: ReportTargetType;
+  page?: number;
+  limit?: number;
+}
+
+// ─── Audit trail (prefix /admin/audit-logs) ──────────────────────────────────
+
+export type AuditAction =
+  | 'REVIEW_HIDDEN'
+  | 'REVIEW_RESTORED'
+  | 'VERIFICATION_APPROVED'
+  | 'VERIFICATION_REJECTED'
+  | 'REPORT_RESOLVED'
+  | 'REPORT_DISMISSED'
+  | 'APPLICATION_COMPLETED'
+  | 'APPLICATION_NOSHOW';
+
+export type AuditTargetType = 'REVIEW' | 'USER' | 'REPORT' | 'APPLICATION';
+
+/** An append-only audit-log record (GET /admin/audit-logs). */
+export interface AuditLog {
+  _id: string;
+  id?: string;
+  actorId: string;
+  action: AuditAction;
+  targetType: AuditTargetType;
+  targetId: string;
+  reason?: string;
+  metadata?: Record<string, unknown> | null;
+  createdAt?: string;
+}
+
+/** Query params for the admin audit-log read surface (GET /admin/audit-logs). */
+export interface AuditQuery {
+  actorId?: string;
+  action?: AuditAction;
+  targetId?: string;
+  page?: number;
+  limit?: number;
 }

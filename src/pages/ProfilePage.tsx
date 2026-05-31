@@ -13,6 +13,8 @@ import {
 } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import profileService from '@services/profileService';
+import ReviewsList from '@components/common/ReviewsList';
+import TrustScoreCard from '@components/common/TrustScoreCard';
 import { useAuthStore } from '@stores/authStore';
 import type {
   AddSkillPayload,
@@ -364,6 +366,9 @@ export default function ProfilePage() {
               )}
             </Card.Body>
           </Card>
+
+          {/* Trust score / verified badge */}
+          {user?.id && <TrustScoreCard userId={user.id} />}
         </Col>
 
         {/* ─── Main column ─── */}
@@ -554,6 +559,13 @@ export default function ProfilePage() {
               )}
             </Card.Body>
           </Card>
+
+          {/* Reviews received */}
+          {user?.id && (
+            <div className="mt-4">
+              <ReviewsList revieweeId={user.id} />
+            </div>
+          )}
         </Col>
       </Row>
 

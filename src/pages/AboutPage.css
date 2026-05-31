@@ -1,0 +1,162 @@
+/* About Us page styles — aligned with F-Job design tokens */
+
+.about-hero {
+  position: relative;
+  background: linear-gradient(135deg, #7C3AED, #A855F7);
+  color: #fff;
+  overflow: hidden;
+}
+
+.about-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.12), transparent 35%),
+    radial-gradient(circle at 85% 80%, rgba(255, 255, 255, 0.1), transparent 40%);
+  pointer-events: none;
+}
+
+.about-hero-content {
+  position: relative;
+  z-index: 1;
+  padding: 80px 0;
+}
+
+.about-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  backdrop-filter: blur(4px);
+}
+
+/* Stats band */
+.about-stats {
+  margin-top: -40px;
+  position: relative;
+  z-index: 2;
+}
+
+.stat-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 28px 20px;
+  text-align: center;
+  height: 100%;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-top: 6px;
+}
+
+/* Value / strength cards */
+.value-card {
+  background: #fff;
+  border: 1px solid #f0eefe;
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  height: 100%;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+}
+
+.value-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+  border-color: var(--primary-light);
+}
+
+.value-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--secondary-bg);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  margin-bottom: 16px;
+}
+
+/* Problem / solution split */
+.compare-card {
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  height: 100%;
+}
+
+.compare-card.problem {
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+}
+
+.compare-card.solution {
+  background: #f0fdf4;
+  border: 1px solid #dcfce7;
+}
+
+.compare-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.compare-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+}
+
+.compare-list li i {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+/* How it works steps */
+.step-number {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+
+/* CTA */
+.about-cta {
+  background: var(--primary-gradient);
+  border-radius: 20px;
+  padding: 48px 32px;
+  text-align: center;
+  color: #fff;
+}
+
+.about-cta .btn-light {
+  font-weight: 600;
+  color: var(--primary);
+}
