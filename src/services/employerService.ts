@@ -12,9 +12,9 @@ const employerService = {
     return api.get<EmployerProfile[]>('/employers');
   },
 
-  /** GET /employers/:id — single employer profile detail. */
+  /** GET /employers/id/:id — single employer profile detail. */
   getById(id: string) {
-    return api.get<EmployerProfile>(`/employers/${id}`);
+    return api.get<EmployerProfile>(`/employers/id/${id}`);
   },
 
   /** PUT /employers/:id — update employer profile. */

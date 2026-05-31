@@ -4,7 +4,7 @@ import type {
   SalaryType,
 } from '@/types/api';
 
-export { getEntityId } from '@/types/api';
+export { getEntityId, getRefId } from '@/types/api';
 
 /** Extract a human-readable message from an axios/unknown error. */
 export function getErrorMessage(error: unknown, fallback: string): string {
@@ -79,4 +79,63 @@ export function applicationStatusLabel(status: ApplicationStatus): string {
     case 'Withdrawn': return 'Đã rút';
     default: return status;
   }
+}
+
+// ─── Payout status → badge variant / label ─────────────────────────────────────
+
+import type { NotificationType, PayoutStatus } from '@/types/api';
+
+export function payoutStatusVariant(status: PayoutStatus): string {
+  switch (status) {
+    case 'completed': return 'success';
+    case 'pending': return 'secondary';
+    case 'processing': return 'info';
+    case 'rejected': return 'danger';
+    default: return 'secondary';
+  }
+}
+
+export function payoutStatusLabel(status: PayoutStatus): string {
+  switch (status) {
+    case 'completed': return 'Đã chi trả';
+    case 'pending': return 'Chờ duyệt';
+    case 'processing': return 'Đang xử lý';
+    case 'rejected': return 'Bị từ chối';
+    default: return status;
+  }
+}
+
+// ─── Notification type → icon / label ───────────────────────────────────────────
+
+export function notificationIcon(type: NotificationType): string {
+  switch (type) {
+    case 'APPLICATION_STATUS': return 'bi-file-earmark-check';
+    case 'NEW_JOB': return 'bi-briefcase';
+    case 'SHIFT_REMINDER': return 'bi-alarm';
+    case 'RECRUITMENT_MESSAGE': return 'bi-chat-dots';
+    case 'SYSTEM': return 'bi-info-circle';
+    default: return 'bi-bell';
+  }
+}
+
+/** Compact relative time (e.g. "5 phút trước"). Falls back to locale date. */
+export function timeAgo(value?: string): string {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  const diffMs = Date.now() - date.getTime();
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 60) return 'Vừa xong';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} phút trước`;
+  const hour = Math.floor(min / 60);
+  if (hour < 24) return `${hour} giờ trước`;
+  const day = Math.floor(hour / 24);
+  if (day < 7) return `${day} ngày trước`;
+  return date.toLocaleDateString('vi-VN');
+}
+
+/** Format a VND amount with thousands separators and the đ suffix. */
+export function formatVnd(amount: number): string {
+  return `${new Intl.NumberFormat('vi-VN').format(amount)}đ`;
 }

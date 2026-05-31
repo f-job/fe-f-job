@@ -246,3 +246,421 @@ export interface ApplicationStatusSnapshot {
   employerNote?: string;
   updatedAt?: string;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// New modules (mirrors recently-added backend controllers)
+//   Profiles · Search & Metadata · Notifications · Chat · Referrals · Payouts
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─── Candidate Profile (self-service, prefix /profiles) ─────────────────────
+
+export interface ExperienceItem {
+  _id: string;
+  id?: string;
+  role: string;
+  companyName: string;
+  startDate: string;
+  endDate?: string;
+  location?: string;
+  duration?: string;
+  description?: string;
+}
+
+export interface EducationItem {
+  _id: string;
+  id?: string;
+  school: string;
+  major?: string;
+  duration: string;
+  degree?: string;
+}
+
+export interface SkillItem {
+  _id: string;
+  id?: string;
+  name: string;
+  /** Proficiency 1–5. */
+  rating: number;
+}
+
+export interface CvFileItem {
+  _id: string;
+  id?: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  isPrimary: boolean;
+  createdAt?: string;
+}
+
+export interface MyProfile {
+  _id: string;
+  id?: string;
+  userId: string;
+  fullName: string;
+  phone?: string;
+  address?: string;
+  summary?: string;
+  location?: string;
+  district?: string;
+  openToWork: boolean;
+  avatarUrl?: string;
+  experiences: ExperienceItem[];
+  educations: EducationItem[];
+  skills: SkillItem[];
+  files: CvFileItem[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UpdateProfilePayload {
+  fullName?: string;
+  phone?: string;
+  address?: string;
+  summary?: string;
+  location?: string;
+  district?: string;
+}
+
+export interface CreateExperiencePayload {
+  role: string;
+  companyName: string;
+  startDate: string;
+  endDate?: string;
+  location?: string;
+  duration?: string;
+  description?: string;
+}
+
+export interface CreateEducationPayload {
+  school: string;
+  major?: string;
+  duration: string;
+  degree?: string;
+}
+
+export interface AddSkillPayload {
+  name: string;
+  rating: number;
+}
+
+// ─── Search & Metadata ──────────────────────────────────────────────────────
+
+export interface SearchJobsQuery {
+  keyword?: string;
+  companyName?: string;
+  province?: string;
+  district?: string;
+  industry?: string;
+  level?: ExperienceLevel;
+  jobType?: CasualJobType;
+  salary_min?: number;
+  salary_max?: number;
+  is_urgent?: boolean;
+  sort?: JobSortOption;
+  page?: number;
+  limit?: number;
+}
+
+export interface SearchCandidatesQuery {
+  skills?: string;
+  province?: string;
+  summary?: string;
+  openToWork?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+export interface Industry {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  description?: string;
+}
+
+export interface Province {
+  id: string;
+  name: string;
+  slug: string;
+  region?: string;
+}
+
+export interface District {
+  id: string;
+  name: string;
+}
+
+export interface DistrictsResponse {
+  province: Province;
+  districts: District[];
+}
+
+export interface SkillOption {
+  id: string;
+  name: string;
+  category?: string;
+}
+
+export interface LevelOption {
+  id: string;
+  value: ExperienceLevel;
+  label: string;
+}
+
+export interface JobTypeOption {
+  id: string;
+  value: CasualJobType;
+  label: string;
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+export type NotificationType =
+  | 'APPLICATION_STATUS'
+  | 'NEW_JOB'
+  | 'SYSTEM'
+  | 'SHIFT_REMINDER'
+  | 'RECRUITMENT_MESSAGE';
+
+export interface AppNotification {
+  _id: string;
+  id?: string;
+  userId: string;
+  title: string;
+  body: string;
+  type: NotificationType;
+  isRead: boolean;
+  metadata?: Record<string, unknown> | null;
+  createdAt?: string;
+}
+
+export interface NotificationSettings {
+  emailEnabled: boolean;
+  inAppEnabled: boolean;
+}
+
+// ─── Chat & Messaging ───────────────────────────────────────────────────────
+
+/** A user reference that may arrive as a bare id or a populated subset. */
+export type UserRef = string | { _id: string; id?: string; fullName?: string; email?: string; role?: UserRole };
+
+/** Resolve the id of a possibly-populated user reference. */
+export function getRefId(ref: UserRef | null | undefined): string {
+  if (!ref) return '';
+  return typeof ref === 'string' ? ref : ref._id ?? ref.id ?? '';
+}
+
+export interface ChatParticipant {
+  _id: string;
+  id?: string;
+  fullName?: string;
+  email?: string;
+  role?: UserRole;
+}
+
+/** Denormalized last-message snapshot on the conversation document. */
+export interface LatestMessageSnapshot {
+  text: string;
+  senderId?: UserRef;
+  createdAt?: string;
+}
+
+export interface Conversation {
+  _id: string;
+  id?: string;
+  /** Raw ids (list endpoint) OR populated objects (create/detail endpoint). */
+  participants: UserRef[];
+  /** Only present on the GET /conversations list response (aggregation). */
+  participantDetails?: ChatParticipant[];
+  latestMessage?: LatestMessageSnapshot | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ChatMessage {
+  _id: string;
+  id?: string;
+  conversationId: string;
+  /** Populated to a {_id, fullName, email} object over REST + socket. */
+  senderId: UserRef;
+  text: string;
+  isRead: boolean;
+  readAt?: string | null;
+  createdAt?: string;
+}
+
+// ─── Candidate search (Employer/Admin) ──────────────────────────────────────
+// GET /search/candidates queries the shared `candidate_profiles` collection.
+// Because the Profiles module writes rich subdocuments there, skills can arrive
+// either as plain strings (legacy) or as {name, rating} objects, and the bio
+// text may live under `bio` or `summary`. The type stays permissive and the UI
+// normalises via the helpers below.
+
+export interface CandidateSearchResult {
+  _id: string;
+  id?: string;
+  userId: string;
+  fullName: string;
+  phone?: string;
+  address?: string;
+  avatarUrl?: string;
+  openToWork: boolean;
+  skills: Array<string | SkillItem>;
+  bio?: string;
+  summary?: string;
+  location?: string;
+  district?: string;
+  updatedAt?: string;
+}
+
+/** Normalise a skill entry (string or {name}) to its display label. */
+export function skillLabel(skill: string | SkillItem): string {
+  return typeof skill === 'string' ? skill : skill?.name ?? '';
+}
+
+/** Best-effort bio/summary text for a candidate search result. */
+export function candidateBio(c: CandidateSearchResult): string {
+  return c.bio ?? c.summary ?? '';
+}
+
+// ─── Referrals ──────────────────────────────────────────────────────────────
+
+export interface ReferralInfo {
+  referralCode: string;
+  inviteUrl: string;
+  totalReferrals: number;
+  totalEarned: number;
+}
+
+export interface ReferralHistoryItem {
+  _id: string;
+  id?: string;
+  refereeId?: { fullName?: string; email?: string } | string;
+  rewardAmount: number;
+  status: string;
+  createdAt?: string;
+}
+
+// ─── Payouts ────────────────────────────────────────────────────────────────
+
+export type PayoutStatus = 'pending' | 'processing' | 'completed' | 'rejected';
+
+export interface PayoutBankInfo {
+  bankName: string;
+  accountNumber: string;
+  accountHolderName: string;
+}
+
+export interface Payout {
+  _id: string;
+  id?: string;
+  userId: string;
+  amount: number;
+  bankInfo: PayoutBankInfo;
+  status: PayoutStatus;
+  transactionId?: string | null;
+  adminNote?: string | null;
+  processedAt?: string | null;
+  createdAt?: string;
+}
+
+export interface PayoutSettings {
+  _id?: string;
+  id?: string;
+  userId?: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolderName: string;
+  updatedAt?: string;
+}
+
+export interface PayoutEligibility {
+  eligible: boolean;
+  referralBalance: number;
+  minimumAmount: number;
+  hasSettings: boolean;
+  reason?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Employer job posting (prefix /employers/jobs) + Admin moderation (/admin/jobs)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Payload to create a job posting. Mirrors CreateEmployerJobDto. */
+export interface CreateEmployerJobPayload {
+  title: string;
+  description: string;
+  location: string;
+  district?: string;
+  salaryType: SalaryType;
+  salaryAmount: number;
+  level: ExperienceLevel;
+  jobType: CasualJobType;
+  industry: string;
+  workingTimeText: string;
+  slots?: number;
+  expiresAt?: string;
+  benefits?: string[];
+  isUrgent?: boolean;
+}
+
+export type UpdateEmployerJobPayload = Partial<CreateEmployerJobPayload>;
+
+export interface EmployerJobsQuery {
+  status?: JobStatus;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminJobsQuery {
+  status?: JobStatus;
+  page?: number;
+  limit?: number;
+}
+
+/** Snapshot of an application as returned by /employers/jobs/:id/applications. */
+export interface EmployerJobApplication {
+  _id: string;
+  id?: string;
+  jobId: string;
+  candidateId: string;
+  employerId: string;
+  candidateName: string;
+  candidatePhone?: string;
+  resumeUrl?: string;
+  coverLetter?: string;
+  status: string;
+  noteByEmployer?: string;
+  isViewed: boolean;
+  createdAt?: string;
+}
+
+export interface EmployerJobApplicationsResponse {
+  jobId: string;
+  total: number;
+  data: EmployerJobApplication[];
+}
+
+/** Human-readable label + badge variant for a job status. */
+export function jobStatusLabel(status: JobStatus): string {
+  switch (status) {
+    case 'draft': return 'Nháp / Bị từ chối';
+    case 'pending': return 'Chờ duyệt';
+    case 'active': return 'Đang hiển thị';
+    case 'closed': return 'Đã đóng';
+    case 'expired': return 'Hết hạn';
+    default: return status;
+  }
+}
+
+export function jobStatusVariant(status: JobStatus): string {
+  switch (status) {
+    case 'draft': return 'secondary';
+    case 'pending': return 'warning';
+    case 'active': return 'success';
+    case 'closed': return 'dark';
+    case 'expired': return 'danger';
+    default: return 'secondary';
+  }
+}

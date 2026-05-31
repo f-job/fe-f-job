@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 
 import MainLayout from '@layouts/MainLayout';
 import AdminLayout from '@layouts/AdminLayout';
+import EmployerLayout from '@layouts/EmployerLayout';
 import { ProtectedRoute } from '@components/auth/ProtectedRoute';
 
 const HomePage = lazy(() => import('@pages/HomePage'));
@@ -14,11 +15,20 @@ const VerifyEmailPage = lazy(() => import('@pages/VerifyEmailPage'));
 const ResendVerificationPage = lazy(() => import('@pages/ResendVerificationPage'));
 const JobsPage = lazy(() => import('@pages/JobsPage'));
 const JobDetailPage = lazy(() => import('@pages/JobDetailPage'));
+const SearchPage = lazy(() => import('@pages/SearchPage'));
+const CandidateSearchPage = lazy(() => import('@pages/CandidateSearchPage'));
 const MyApplicationsPage = lazy(() => import('@pages/MyApplicationsPage'));
+const ProfilePage = lazy(() => import('@pages/ProfilePage'));
+const NotificationsPage = lazy(() => import('@pages/NotificationsPage'));
+const MessagesPage = lazy(() => import('@pages/MessagesPage'));
+const ReferralPage = lazy(() => import('@pages/ReferralPage'));
 const AdminUsersPage = lazy(() => import('@pages/AdminUsersPage'));
 const AdminCandidatesPage = lazy(() => import('@pages/AdminCandidatesPage'));
 const AdminEmployersPage = lazy(() => import('@pages/AdminEmployersPage'));
+const AdminJobsPage = lazy(() => import('@pages/AdminJobsPage'));
 const MonitoringPage = lazy(() => import('@pages/MonitoringPage'));
+const PostJobPage = lazy(() => import('@pages/PostJobPage'));
+const EmployerJobsPage = lazy(() => import('@pages/EmployerJobsPage'));
 const FacebookCallbackPage = lazy(() => import('@pages/FacebookCallbackPage'));
 const FacebookSuccessPage = lazy(() => import('@pages/FacebookSuccessPage'));
 const GoogleCallbackPage = lazy(() => import('@pages/GoogleCallbackPage'));
@@ -39,11 +49,60 @@ export const routes: RouteObject[] = [
       { index: true, element: withSuspense(HomePage) },
       { path: 'viec-lam', element: withSuspense(JobsPage) },
       { path: 'viec-lam/:id', element: withSuspense(JobDetailPage) },
+      { path: 'tim-kiem', element: withSuspense(SearchPage) },
       {
         path: 'don-ung-tuyen',
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute roles={['CANDIDATE']}>
             {withSuspense(MyApplicationsPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'ho-so',
+        element: (
+          <ProtectedRoute roles={['CANDIDATE']}>
+            {withSuspense(ProfilePage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'thong-bao',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(NotificationsPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'tin-nhan',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(MessagesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'gioi-thieu-thuong',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ReferralPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'tim-ung-vien',
+        element: (
+          <ProtectedRoute roles={['EMPLOYER', 'ADMIN']}>
+            {withSuspense(CandidateSearchPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'dang-tin',
+        element: (
+          <ProtectedRoute roles={['EMPLOYER', 'ADMIN']}>
+            {withSuspense(PostJobPage)}
           </ProtectedRoute>
         ),
       },
@@ -58,7 +117,7 @@ export const routes: RouteObject[] = [
   {
     path: '/admin',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute roles={['ADMIN']}>
         <AdminLayout />
       </ProtectedRoute>
     ),
@@ -67,7 +126,20 @@ export const routes: RouteObject[] = [
       { path: 'users', element: withSuspense(AdminUsersPage) },
       { path: 'candidates', element: withSuspense(AdminCandidatesPage) },
       { path: 'employers', element: withSuspense(AdminEmployersPage) },
+      { path: 'jobs', element: withSuspense(AdminJobsPage) },
       { path: 'monitoring', element: withSuspense(MonitoringPage) },
+    ],
+  },
+  {
+    path: '/nha-tuyen-dung',
+    element: (
+      <ProtectedRoute roles={['EMPLOYER', 'ADMIN']}>
+        <EmployerLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <Navigate to="tin-dang" replace /> },
+      { path: 'tin-dang', element: withSuspense(EmployerJobsPage) },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

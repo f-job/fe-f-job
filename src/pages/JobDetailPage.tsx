@@ -16,9 +16,10 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import jobService from '@services/jobService';
 import applicationService from '@services/applicationService';
+import employerService from '@services/employerService';
 import { useAuthStore } from '@stores/authStore';
 import type { BackendJob, CreateApplicationPayload, CvType } from '@/types/api';
-import { formatDate, formatSalary, getErrorMessage } from '@utils/format';
+import { formatDate, formatSalary, getErrorMessage, getRefId } from '@utils/format';
 
 interface ApplyForm {
   cvType: CvType;
@@ -38,6 +39,7 @@ export default function JobDetailPage() {
   const [applied, setApplied] = useState(false);
   const [showApply, setShowApply] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [startingChat, setStartingChat] = useState(false);
 
   const { register, handleSubmit, watch, reset } = useForm<ApplyForm>({
     defaultValues: { cvType: 'online', cvPdfUrl: '', coverLetter: '' },
@@ -105,6 +107,37 @@ export default function JobDetailPage() {
       toast.error(getErrorMessage(err, 'Ứng tuyển thất bại'));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  /**
+   * Start (or open) a chat with the employer who posted this job.
+   * `job.employerId` references an EmployerProfile; the conversation API needs
+   * the employer's User id, which we resolve via GET /employers/:id (populated userId).
+   */
+  const handleContactEmployer = async () => {
+    if (!job) return;
+    if (!isAuthenticated) {
+      navigate('/dang-nhap');
+      return;
+    }
+    if (!isCandidate) {
+      toast.error('Chỉ ứng viên mới có thể nhắn tin cho nhà tuyển dụng.');
+      return;
+    }
+    setStartingChat(true);
+    try {
+      const { data: employer } = await employerService.getById(job.employerId);
+      const employerUserId = getRefId(employer.userId);
+      if (!employerUserId) {
+        toast.error('Không tìm thấy tài khoản nhà tuyển dụng.');
+        return;
+      }
+      navigate(`/tin-nhan?to=${employerUserId}`);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể mở hội thoại với nhà tuyển dụng'));
+    } finally {
+      setStartingChat(false);
     }
   };
 
@@ -226,6 +259,15 @@ export default function JobDetailPage() {
                   Ứng tuyển ngay
                 </Button>
               )}
+              <Button
+                variant="outline-primary"
+                className="w-100 mt-2"
+                onClick={handleContactEmployer}
+                disabled={startingChat}
+              >
+                <i className="bi bi-chat-dots me-2" />
+                {startingChat ? 'Đang mở...' : 'Nhắn tin với NTD'}
+              </Button>
               {!isAuthenticated && (
                 <small className="text-muted d-block mt-2 text-center">
                   Bạn cần đăng nhập để ứng tuyển.
