@@ -22,6 +22,18 @@ export default function AdminLayout() {
             <Nav.Link as={NavLink} to="/admin/jobs">
               Duyệt tin
             </Nav.Link>
+            <Nav.Link as={NavLink} to="/admin/reviews">
+              Đánh giá
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/admin/verifications">
+              Xác minh
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/admin/reports">
+              Báo cáo
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/admin/audit-logs">
+              Nhật ký
+            </Nav.Link>
             <Nav.Link as={NavLink} to="/admin/monitoring">
               Monitoring
             </Nav.Link>

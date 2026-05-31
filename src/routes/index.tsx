@@ -7,6 +7,7 @@ import EmployerLayout from '@layouts/EmployerLayout';
 import { ProtectedRoute } from '@components/auth/ProtectedRoute';
 
 const HomePage = lazy(() => import('@pages/HomePage'));
+const AboutPage = lazy(() => import('@pages/AboutPage'));
 const LoginPage = lazy(() => import('@pages/LoginPage'));
 const SignupPage = lazy(() => import('@pages/SignupPage'));
 const ForgotPasswordPage = lazy(() => import('@pages/ForgotPasswordPage'));
@@ -19,6 +20,7 @@ const SearchPage = lazy(() => import('@pages/SearchPage'));
 const CandidateSearchPage = lazy(() => import('@pages/CandidateSearchPage'));
 const MyApplicationsPage = lazy(() => import('@pages/MyApplicationsPage'));
 const ProfilePage = lazy(() => import('@pages/ProfilePage'));
+const VerificationPage = lazy(() => import('@pages/VerificationPage'));
 const NotificationsPage = lazy(() => import('@pages/NotificationsPage'));
 const MessagesPage = lazy(() => import('@pages/MessagesPage'));
 const ReferralPage = lazy(() => import('@pages/ReferralPage'));
@@ -26,6 +28,10 @@ const AdminUsersPage = lazy(() => import('@pages/AdminUsersPage'));
 const AdminCandidatesPage = lazy(() => import('@pages/AdminCandidatesPage'));
 const AdminEmployersPage = lazy(() => import('@pages/AdminEmployersPage'));
 const AdminJobsPage = lazy(() => import('@pages/AdminJobsPage'));
+const AdminReviewsPage = lazy(() => import('@pages/AdminReviewsPage'));
+const AdminVerificationsPage = lazy(() => import('@pages/AdminVerificationsPage'));
+const AdminReportsPage = lazy(() => import('@pages/AdminReportsPage'));
+const AdminAuditLogsPage = lazy(() => import('@pages/AdminAuditLogsPage'));
 const MonitoringPage = lazy(() => import('@pages/MonitoringPage'));
 const PostJobPage = lazy(() => import('@pages/PostJobPage'));
 const EmployerJobsPage = lazy(() => import('@pages/EmployerJobsPage'));
@@ -47,6 +53,7 @@ export const routes: RouteObject[] = [
     element: <MainLayout />,
     children: [
       { index: true, element: withSuspense(HomePage) },
+      { path: 've-chung-toi', element: withSuspense(AboutPage) },
       { path: 'viec-lam', element: withSuspense(JobsPage) },
       { path: 'viec-lam/:id', element: withSuspense(JobDetailPage) },
       { path: 'tim-kiem', element: withSuspense(SearchPage) },
@@ -63,6 +70,14 @@ export const routes: RouteObject[] = [
         element: (
           <ProtectedRoute roles={['CANDIDATE']}>
             {withSuspense(ProfilePage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'xac-minh-danh-tinh',
+        element: (
+          <ProtectedRoute roles={['CANDIDATE']}>
+            {withSuspense(VerificationPage)}
           </ProtectedRoute>
         ),
       },
@@ -127,6 +142,10 @@ export const routes: RouteObject[] = [
       { path: 'candidates', element: withSuspense(AdminCandidatesPage) },
       { path: 'employers', element: withSuspense(AdminEmployersPage) },
       { path: 'jobs', element: withSuspense(AdminJobsPage) },
+      { path: 'reviews', element: withSuspense(AdminReviewsPage) },
+      { path: 'verifications', element: withSuspense(AdminVerificationsPage) },
+      { path: 'reports', element: withSuspense(AdminReportsPage) },
+      { path: 'audit-logs', element: withSuspense(AdminAuditLogsPage) },
       { path: 'monitoring', element: withSuspense(MonitoringPage) },
     ],
   },

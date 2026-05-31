@@ -11,6 +11,7 @@ import {
 } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import applicationService from '@services/applicationService';
+import ReviewFormModal from '@components/common/ReviewFormModal';
 import type { Application, ApplicationJobSnapshot, PaginationMeta } from '@/types/api';
 import {
   applicationStatusLabel,
@@ -31,6 +32,7 @@ export default function MyApplicationsPage() {
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reviewAppId, setReviewAppId] = useState<string | null>(null);
 
   const load = useCallback(async (targetPage: number) => {
     setIsLoading(true);
@@ -122,6 +124,14 @@ export default function MyApplicationsPage() {
                           >
                             Rút đơn
                           </Button>
+                        ) : app.status === 'Completed' ? (
+                          <Button
+                            size="sm"
+                            variant="outline-primary"
+                            onClick={() => setReviewAppId(getEntityId(app))}
+                          >
+                            <i className="bi bi-star me-1"></i>Đánh giá
+                          </Button>
                         ) : (
                           <span className="text-muted small">—</span>
                         )}
@@ -158,6 +168,13 @@ export default function MyApplicationsPage() {
           </Button>
         </div>
       )}
+
+      <ReviewFormModal
+        show={reviewAppId !== null}
+        applicationId={reviewAppId ?? ''}
+        onClose={() => setReviewAppId(null)}
+        onSubmitted={() => load(page)}
+      />
     </Container>
   );
 }

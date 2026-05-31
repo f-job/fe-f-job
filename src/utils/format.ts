@@ -65,6 +65,8 @@ export function applicationStatusVariant(status: ApplicationStatus): string {
     case 'Accepted': return 'success';
     case 'Rejected': return 'danger';
     case 'Withdrawn': return 'dark';
+    case 'Completed': return 'success';
+    case 'NoShow': return 'danger';
     default: return 'secondary';
   }
 }
@@ -77,6 +79,8 @@ export function applicationStatusLabel(status: ApplicationStatus): string {
     case 'Accepted': return 'Được nhận';
     case 'Rejected': return 'Bị từ chối';
     case 'Withdrawn': return 'Đã rút';
+    case 'Completed': return 'Đã hoàn thành';
+    case 'NoShow': return 'Vắng mặt';
     default: return status;
   }
 }
