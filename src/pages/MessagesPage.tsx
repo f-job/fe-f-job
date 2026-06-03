@@ -27,6 +27,9 @@ import { useChatStore } from '@stores/chatStore';
 import type { ChatMessage, Conversation } from '@/types/api';
 import { getEntityId, getRefId, getErrorMessage, timeAgo } from '@utils/format';
 
+// Import debug utils
+import '@utils/socketDebug';
+
 /** Resolve the other participant's display name for a conversation. */
 function otherParticipantName(conv: Conversation, myId: string): string {
   // List endpoint exposes participantDetails; create/detail exposes populated participants.
@@ -155,7 +158,11 @@ export default function MessagesPage() {
     if (didInitRef.current) return;
     didInitRef.current = true;
 
-    getChatSocket();
+    // Initialize socket connection FIRST
+    const socket = getChatSocket();
+    
+    // Log initial connection state
+    console.log('🔌 Initializing chat socket, connected:', socket.connected);
 
     (async () => {
       const list = await loadConversations();
@@ -189,46 +196,93 @@ export default function MessagesPage() {
       if (list.length > 0) setActiveId(getEntityId(list[0]));
     })();
 
+    // Setup message listener with ref to ensure it always uses latest state
     const offMsg = onNewMessage((evt: NewMessageEvent) => {
       const { conversationId, message } = evt;
-      if (conversationId === activeIdRef.current) {
-        setMessages((prev) => {
-          if (prev.some((m) => getEntityId(m) === getEntityId(message))) return prev;
-          scrollToBottom();
-          return [...prev, message];
-        });
-        // Inbound message in the open thread → mark read immediately
-        if (getRefId(message.senderId) !== myId) {
-          chatService.markRead(conversationId, getEntityId(message)).then(refreshUnreadCount);
-        }
-      } else if (getRefId(message.senderId) !== myId) {
-        // Message for another thread → badge will pick it up
-        refreshUnreadCount();
-      }
-
-      // Bubble preview into the conversation list (and reorder to top)
-      setConversations((prev) => {
-        const idx = prev.findIndex((c) => getEntityId(c) === conversationId);
+      const messageId = getEntityId(message);
+      const senderId = getRefId(message.senderId);
+      const currentActiveId = activeIdRef.current;
+      
+      console.log('📨 [HANDLER] Received newMessage event:', { 
+        conversationId, 
+        messageId,
+        senderId,
+        text: message.text,
+        currentUserId: myId,
+        isMyMessage: senderId === myId,
+        currentActiveId: currentActiveId,
+        isActiveConversation: conversationId === currentActiveId
+      });
+      
+      // ALWAYS update conversation list first (for preview)
+      setConversations((prevConvs) => {
+        const idx = prevConvs.findIndex((c) => getEntityId(c) === conversationId);
         if (idx === -1) {
-          loadConversations();
-          return prev;
+          console.log('⚠️ Conversation not found in list');
+          return prevConvs;
         }
         const updated: Conversation = {
-          ...prev[idx],
+          ...prevConvs[idx],
           latestMessage: { text: message.text, createdAt: message.createdAt },
           updatedAt: message.createdAt,
         };
-        return [updated, ...prev.filter((_, i) => i !== idx)];
+        const newConvs = [updated, ...prevConvs.filter((_, i) => i !== idx)];
+        console.log('✅ Updated conversation list');
+        return newConvs;
       });
-    });
-
-    const offExc = onSocketException((err) => {
-      if (err.errorCode === 'ERR_1001') {
-        toast.error('Phiên chat hết hạn, vui lòng đăng nhập lại.');
+      
+      // Update messages if conversation is active
+      if (conversationId === currentActiveId) {
+        console.log('✅ Message is for ACTIVE conversation, updating messages...');
+        setMessages((prevMsgs) => {
+          // Remove optimistic message if exists (starts with 'temp-')
+          const withoutOptimistic = prevMsgs.filter((m) => {
+            const id = getEntityId(m);
+            return !id.startsWith('temp-');
+          });
+          // Don't duplicate if message already exists
+          if (withoutOptimistic.some((m) => getEntityId(m) === messageId)) {
+            console.log('⚠️ Message already exists in list, skipping');
+            return withoutOptimistic;
+          }
+          console.log('✅✅ ADDING MESSAGE TO UI:', message.text);
+          // Scroll after state update
+          requestAnimationFrame(() => {
+            bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+          });
+          return [...withoutOptimistic, message];
+        });
+        // Inbound message in the open thread → mark read immediately
+        if (senderId !== myId) {
+          console.log('👁️ Marking message as read');
+          chatService.markRead(conversationId, messageId).then(refreshUnreadCount);
+        }
+      } else {
+        console.log('📬 Message for DIFFERENT conversation:', conversationId, 'vs current:', currentActiveId);
+        if (senderId !== myId) {
+          // Message for another thread → badge will pick it up
+          refreshUnreadCount();
+        }
       }
     });
 
+    const offExc = onSocketException((err) => {
+      console.error('❌ Socket exception:', err);
+      if (err.errorCode === 'ERR_1001') {
+        toast.error('Phiên chat hết hạn, vui lòng đăng nhập lại.');
+      } else {
+        toast.error(`Lỗi chat: ${err.message}`);
+      }
+    });
+
+    // Ensure socket is connected
+    if (!socket.connected) {
+      console.log('⚠️ Socket not connected, connecting now...');
+      socket.connect();
+    }
+
     return () => {
+      console.log('🧹 Cleaning up socket listeners');
       offMsg();
       offExc();
     };
@@ -241,13 +295,65 @@ export default function MessagesPage() {
     if (activeId) loadMessages(activeId);
   }, [activeId, loadMessages]);
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const text = draft.trim();
     if (!text || !activeId) return;
-    // Server persists + echoes back the message via the `newMessage` event.
-    emitSendMessage(activeId, text);
+    
+    // Clear draft immediately
     setDraft('');
+    
+    // Optimistic UI update - add message immediately
+    const optimisticMessage: ChatMessage = {
+      _id: `temp-${Date.now()}`,
+      conversationId: activeId,
+      senderId: myId as any,
+      text,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    setMessages((prev) => [...prev, optimisticMessage]);
+    scrollToBottom();
+    
+    try {
+      const socket = getChatSocket();
+      
+      // If socket is connected, emit via socket
+      if (socket.connected) {
+        console.log('📤 Sending via socket...');
+        emitSendMessage(activeId, text);
+      } else {
+        // If socket not connected, use HTTP fallback immediately
+        console.log('⚠️ Socket not connected, using HTTP fallback');
+        const { data } = await chatService.sendMessage(activeId, text);
+        // Replace optimistic message with real one
+        setMessages((prev) => 
+          prev.map((m) => 
+            getEntityId(m) === optimisticMessage._id ? data : m
+          )
+        );
+        // Update conversation list
+        setConversations((prev) => {
+          const idx = prev.findIndex((c) => getEntityId(c) === activeId);
+          if (idx === -1) return prev;
+          const updated: Conversation = {
+            ...prev[idx],
+            latestMessage: { text: data.text, createdAt: data.createdAt },
+            updatedAt: data.createdAt,
+          };
+          return [updated, ...prev.filter((_, i) => i !== idx)];
+        });
+      }
+    } catch (err) {
+      console.error('❌ Failed to send message:', err);
+      toast.error(getErrorMessage(err, 'Không thể gửi tin nhắn'));
+      // Remove optimistic message on failure
+      setMessages((prev) => prev.filter((m) => getEntityId(m) !== optimisticMessage._id));
+      // Restore draft
+      setDraft(text);
+    }
   };
 
   const handleHide = async (conv: Conversation) => {
@@ -267,6 +373,24 @@ export default function MessagesPage() {
   };
 
   const activeConv = conversations.find((c) => getEntityId(c) === activeId) ?? null;
+  
+  // Debug: Log socket connection state (DISABLED - too spammy)
+  // useEffect(() => {
+  //   const socket = getChatSocket();
+  //   const logConnectionState = () => {
+  //     console.log('🔍 Socket State Check:', {
+  //       connected: socket.connected,
+  //       id: socket.id,
+  //       userId: myId,
+  //       activeConversation: activeId,
+  //     });
+  //   };
+    
+  //   logConnectionState();
+  //   const interval = setInterval(logConnectionState, 5000);
+    
+  //   return () => clearInterval(interval);
+  // }, [myId, activeId]);
 
   return (
     <Container className="py-4">
@@ -346,6 +470,26 @@ export default function MessagesPage() {
                   <Badge bg="success" pill className="ms-auto" style={{ fontSize: '0.65rem' }}>
                     <i className="bi bi-broadcast me-1"></i>Realtime
                   </Badge>
+                  {/* Debug info */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <Button 
+                      size="sm" 
+                      variant="outline-secondary"
+                      onClick={() => {
+                        const socket = getChatSocket();
+                        console.log('🔍 Debug Info:', {
+                          socketId: socket.id,
+                          connected: socket.connected,
+                          userId: myId,
+                          conversationId: activeId,
+                          rooms: Array.from((socket as any).rooms || []),
+                        });
+                        toast.success('Check console for debug info');
+                      }}
+                    >
+                      <i className="bi bi-bug"></i>
+                    </Button>
+                  )}
                 </div>
 
                 <div className="flex-grow-1 overflow-auto p-3 bg-light">

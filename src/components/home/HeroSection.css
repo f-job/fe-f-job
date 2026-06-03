@@ -7,7 +7,7 @@
   content: '';
   display: block;
   height: 380px;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.9), rgba(168, 85, 247, 0.7)),
+  background: linear-gradient(135deg, rgba(44, 94, 173, 0.9), rgba(21, 145, 220, 0.8)),
     url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1600&q=80') center/cover no-repeat;
 }
 
@@ -45,5 +45,5 @@
 
 .search-input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  box-shadow: 0 0 0 3px rgba(21, 145, 220, 0.1);
 }

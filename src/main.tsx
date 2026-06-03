@@ -23,12 +23,13 @@ const queryClient = new QueryClient({
 useAuthStore.getState().loadFromStorage();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+  // Temporarily disable StrictMode for debugging chat issues
+  // <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <App />
         <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       </BrowserRouter>
     </QueryClientProvider>
-  </React.StrictMode>,
+  // </React.StrictMode>,
 );

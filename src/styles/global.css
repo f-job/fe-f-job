@@ -3,10 +3,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --primary: #7C3AED;
-  --primary-light: #A855F7;
-  --primary-gradient: linear-gradient(135deg, #7C3AED, #A855F7);
-  --secondary-bg: #F5F3FF;
+  --primary: #1591DC;
+  --primary-dark: #2C5EAD;
+  --primary-light: #4BB8FA;
+  --primary-gradient: linear-gradient(135deg, #2C5EAD, #1591DC);
+  --secondary-bg: #C4E2F5;
+  --accent: #4BB8FA;
   --text-dark: #1F2937;
   --text-muted: #6B7280;
   --tag-urgent: #F59E0B;
