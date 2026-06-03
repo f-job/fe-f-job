@@ -15,6 +15,7 @@ import {
 } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import chatService from '@services/chatService';
+import UserAvatar from '@components/common/UserAvatar';
 import {
   emitSendMessage,
   getChatSocket,
@@ -311,7 +312,6 @@ export default function MessagesPage() {
       text,
       isRead: false,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
     
     setMessages((prev) => [...prev, optimisticMessage]);
@@ -413,6 +413,7 @@ export default function MessagesPage() {
                 <ListGroup variant="flush">
                   {conversations.map((c) => {
                     const id = getEntityId(c);
+                    const otherName = otherParticipantName(c, myId);
                     return (
                       <ListGroup.Item
                         key={id}
@@ -421,10 +422,14 @@ export default function MessagesPage() {
                         onClick={() => setActiveId(id)}
                         className="d-flex gap-2 align-items-center"
                       >
-                        <i className="bi bi-person-circle fs-4 text-secondary"></i>
+                        <UserAvatar
+                          src={null}
+                          alt={otherName}
+                          size={40}
+                        />
                         <div className="flex-grow-1 overflow-hidden">
                           <div className="fw-500 text-truncate">
-                            {otherParticipantName(c, myId)}
+                            {otherName}
                           </div>
                           <div className="small text-muted text-truncate">
                             {c.latestMessage?.text ?? 'Bắt đầu trò chuyện'}
@@ -465,13 +470,17 @@ export default function MessagesPage() {
             ) : (
               <>
                 <div className="p-3 border-bottom d-flex align-items-center gap-2">
-                  <i className="bi bi-person-circle fs-4 text-secondary"></i>
+                  <UserAvatar
+                    src={null}
+                    alt={otherParticipantName(activeConv, myId)}
+                    size={40}
+                  />
                   <span className="fw-bold">{otherParticipantName(activeConv, myId)}</span>
                   <Badge bg="success" pill className="ms-auto" style={{ fontSize: '0.65rem' }}>
                     <i className="bi bi-broadcast me-1"></i>Realtime
                   </Badge>
                   {/* Debug info */}
-                  {process.env.NODE_ENV === 'development' && (
+                  {import.meta.env.DEV && (
                     <Button 
                       size="sm" 
                       variant="outline-secondary"
@@ -509,7 +518,7 @@ export default function MessagesPage() {
                         >
                           <div
                             className={`px-3 py-2 rounded-3 ${
-                              mine ? 'bg-primary text-white' : 'bg-white border'
+                              mine ? 'bg-primary text-white' : 'message-bubble-received'
                             }`}
                             style={{ maxWidth: '75%' }}
                           >

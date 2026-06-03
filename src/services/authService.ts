@@ -18,6 +18,7 @@ export interface AuthUser {
   name?: string;
   fullName?: string;
   role: string;
+  avatarUrl?: string | null;
 }
 
 export interface AuthResponse {

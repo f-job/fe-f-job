@@ -27,6 +27,8 @@ export interface AuthUser {
   email: string;
   name: string;
   role: string;
+  fullName?: string;
+  avatarUrl?: string | null;
 }
 
 export interface ApiError {

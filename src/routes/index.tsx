@@ -38,6 +38,8 @@ const EmployerJobsPage = lazy(() => import('@pages/EmployerJobsPage'));
 const FacebookCallbackPage = lazy(() => import('@pages/FacebookCallbackPage'));
 const FacebookSuccessPage = lazy(() => import('@pages/FacebookSuccessPage'));
 const GoogleCallbackPage = lazy(() => import('@pages/GoogleCallbackPage'));
+const TestAvatarPage = lazy(() => import('@pages/TestAvatarPage'));
+const DebugAuthPage = lazy(() => import('@pages/DebugAuthPage'));
 
 function withSuspense(Component: React.LazyExoticComponent<() => JSX.Element>) {
   return (
@@ -127,6 +129,8 @@ export const routes: RouteObject[] = [
       { path: 'dat-lai-mat-khau', element: withSuspense(ResetPasswordPage) },
       { path: 'xac-thuc-email/:token', element: withSuspense(VerifyEmailPage) },
       { path: 'gui-lai-xac-thuc-email', element: withSuspense(ResendVerificationPage) },
+      { path: 'test-avatar', element: withSuspense(TestAvatarPage) },
+      { path: 'debug-auth', element: withSuspense(DebugAuthPage) },
     ],
   },
   {

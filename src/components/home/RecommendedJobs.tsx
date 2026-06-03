@@ -9,7 +9,7 @@ import { formatSalary, getEntityId } from '@utils/format';
 function RecommendedCard({ job }: { job: BackendJob }) {
   const id = getEntityId(job);
   return (
-    <div className="job-card card-hover bg-white p-3 position-relative h-100">
+    <div className="job-card card-hover p-3 position-relative h-100">
       <div className="position-absolute top-0 end-0 p-2">
         <span className="tag-new">Gợi ý</span>
       </div>

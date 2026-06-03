@@ -17,6 +17,8 @@ import toast from 'react-hot-toast';
 import searchService from '@services/searchService';
 import profileService from '@services/profileService';
 import { useAuthStore } from '@stores/authStore';
+// TEMPORARY: Comment out UserAvatar to test
+// import UserAvatar from '@components/common/UserAvatar';
 import type {
   CandidateSearchResult,
   MyProfile,
@@ -184,12 +186,16 @@ export default function CandidateSearchPage() {
                   <Card.Body className="d-flex flex-column">
                     <div className="d-flex align-items-center gap-3 mb-2">
                       <img
-                        src={c.avatarUrl || 'https://placehold.co/56x56?text=CV'}
+                        src={c.avatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.fullName) + '&background=random'}
                         alt={c.fullName}
                         className="rounded-circle"
                         width={56}
                         height={56}
                         style={{ objectFit: 'cover' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.fullName) + '&background=random';
+                        }}
                       />
                       <div>
                         <h6 className="fw-bold mb-0">{c.fullName}</h6>
@@ -273,12 +279,16 @@ export default function CandidateSearchPage() {
             <>
               <div className="d-flex align-items-center gap-3 mb-3">
                 <img
-                  src={preview.avatarUrl || 'https://placehold.co/72x72?text=CV'}
+                  src={preview.avatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(preview.fullName) + '&background=random'}
                   alt={preview.fullName}
                   className="rounded-circle"
                   width={72}
                   height={72}
                   style={{ objectFit: 'cover' }}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(preview.fullName) + '&background=random';
+                  }}
                 />
                 <div>
                   <h5 className="fw-bold mb-0">{preview.fullName}</h5>

@@ -4,6 +4,8 @@ import { Navbar, Nav, Container, Button, Dropdown, Badge } from 'react-bootstrap
 import { useAuthStore } from '@stores/authStore';
 import { useChatStore } from '@stores/chatStore';
 import { NotificationBell } from '@components/common/NotificationBell';
+import { ThemeToggle } from '@components/common/ThemeToggle';
+import UserAvatar from '@components/common/UserAvatar';
 import { disconnectChatSocket, getChatSocket, onNewMessage } from '@services/chatSocket';
 
 /** Poll interval for the chat unread badge (ms). */
@@ -44,7 +46,7 @@ export function AppNavbar() {
   };
 
   return (
-    <Navbar bg="white" expand="lg" sticky="top" className="shadow-sm py-2">
+    <Navbar bg="white" expand="lg" sticky="top" className="navbar shadow-sm py-2">
       <Container>
         <Navbar.Brand as={Link} to="/" className="fw-bold fs-4">
           <span className="text-gradient">F-Job</span>
@@ -68,6 +70,11 @@ export function AppNavbar() {
           </Nav>
 
           <Nav className="d-flex align-items-center gap-2">
+            {/* Theme Toggle */}
+            <div className="px-2">
+              <ThemeToggle />
+            </div>
+
             {isAuthenticated && user ? (
               <>
                 <Nav.Link
@@ -93,8 +100,13 @@ export function AppNavbar() {
                 <Dropdown.Toggle
                   variant="light"
                   className="d-flex align-items-center gap-2 border-0"
+                  style={{ padding: '0.375rem 0.75rem' }}
                 >
-                  <i className="bi bi-person-circle"></i>
+                  <UserAvatar
+                    src={user.avatarUrl}
+                    alt={user.name ?? user.fullName ?? user.email ?? 'User'}
+                    size={32}
+                  />
                   <span className="fw-500">{user.name ?? user.fullName ?? user.email}</span>
                 </Dropdown.Toggle>
                 <Dropdown.Menu>

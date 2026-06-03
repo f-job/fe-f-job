@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import profileService from '@services/profileService';
 import ReviewsList from '@components/common/ReviewsList';
 import TrustScoreCard from '@components/common/TrustScoreCard';
+import UserAvatar from '@components/common/UserAvatar';
 import { useAuthStore } from '@stores/authStore';
 import type {
   AddSkillPayload,
@@ -260,13 +261,10 @@ export default function ProfilePage() {
           <Card className="border-0 shadow-sm mb-4">
             <Card.Body className="text-center">
               <div className="position-relative d-inline-block mb-3">
-                <img
-                  src={profile?.avatarUrl || 'https://placehold.co/120x120?text=Avatar'}
-                  alt="avatar"
-                  className="rounded-circle"
-                  width={120}
-                  height={120}
-                  style={{ objectFit: 'cover' }}
+                <UserAvatar
+                  src={profile?.avatarUrl}
+                  alt={profile?.fullName || 'Avatar'}
+                  size={120}
                 />
                 <Button
                   size="sm"

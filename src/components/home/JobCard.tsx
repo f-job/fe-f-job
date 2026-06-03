@@ -24,7 +24,7 @@ function getTagClass(tag: string) {
 
 export function JobCard({ job }: JobCardProps) {
   return (
-    <div className="job-card card-hover bg-white p-3 position-relative">
+    <div className="job-card card-hover p-3 position-relative">
       {job.tags.length > 0 && (
         <div className="position-absolute top-0 end-0 p-2 d-flex gap-1">
           {job.tags.map((tag) => (

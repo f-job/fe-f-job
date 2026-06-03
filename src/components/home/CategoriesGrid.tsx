@@ -46,9 +46,9 @@ export function CategoriesGrid() {
   const useBackend = !!stats && stats.length > 0;
 
   return (
-    <section className="section" style={{ backgroundColor: 'var(--secondary-bg)' }}>
+    <section className="section section-categories">
       <Container>
-        <div className="bg-white rounded-4 p-4 shadow-sm">
+        <div className="categories-wrapper rounded-4 p-4 shadow-sm">
           {isLoading ? (
             <div className="text-center py-4">
               <Spinner />
