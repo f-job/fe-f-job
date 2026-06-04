@@ -81,7 +81,15 @@ export function Footer() {
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-center">
           <small className="text-white-50">&copy; 2026 F-Job. All rights reserved.</small>
           <div className="d-flex gap-3 mt-2 mt-md-0">
-            <a href="#" className="text-white-50 fs-5"><i className="bi bi-facebook" /></a>
+            <a 
+              href="https://www.facebook.com/profile.php?id=61590358865664" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-white-50 fs-5"
+              aria-label="Facebook"
+            >
+              <i className="bi bi-facebook" />
+            </a>
             <a href="#" className="text-white-50 fs-5"><i className="bi bi-linkedin" /></a>
             <a href="#" className="text-white-50 fs-5"><i className="bi bi-chat-dots" /></a>
           </div>
