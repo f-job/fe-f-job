@@ -220,7 +220,7 @@
 }
 
 .highlight-text {
-  background: linear-gradient(120deg, #ffd89b 0%, #19547b 100%);
+  background: linear-gradient(120deg, #fbbf24 0%, #f97316 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -306,7 +306,7 @@
   border-radius: 20px;
   padding: 32px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  margin-top: -80px;
+  margin-top: -20px;
   position: relative;
   z-index: 10;
   border: 1px solid var(--border-color);

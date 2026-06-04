@@ -80,7 +80,7 @@ export function HeroSection() {
             <h1 className="hero-title">
               Tìm việc thời vụ nhanh
               <br />
-              <span className="highlight-text">Kết nối ngay với sự kiện</span>
+              <span className="highlight-text">Kết nối ngay với F-Job</span>
             </h1>
             <p className="hero-subtitle">
               Hàng nghìn cơ hội việc làm sự kiện đang chờ bạn
@@ -184,10 +184,10 @@ export function HeroSection() {
                 </Form.Label>
                 <Form.Select className="search-input">
                   <option value="">Tất cả</option>
-                  <option>200k - 400k/ngày</option>
-                  <option>400k - 700k/ngày</option>
-                  <option>700k - 1tr/ngày</option>
-                  <option>Trên 1tr/ngày</option>
+                  <option>200k - 400k</option>
+                  <option>400k - 700k</option>
+                  <option>700k - 1tr</option>
+                  <option>Trên 1tr</option>
                 </Form.Select>
               </Form.Group>
             </Col>

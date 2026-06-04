@@ -15,6 +15,7 @@ export default defineConfig({
       '@utils': '/src/utils',
       '@layouts': '/src/layouts',
       '@pages': '/src/pages',
+      '@assets': '/src/assets',
     },
   },
   server: {
@@ -22,11 +23,11 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:4300',
+        target: 'https://0c9d-14-233-186-38.ngrok-free.app',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://localhost:4300',
+        target: 'https://0c9d-14-233-186-38.ngrok-free.app',
         ws: true,
       },
     },
