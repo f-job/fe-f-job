@@ -19,6 +19,7 @@ import applicationService from '@services/applicationService';
 import employerService from '@services/employerService';
 import ReportModal from '@components/common/ReportModal';
 import { useAuthStore } from '@stores/authStore';
+import { useVerificationCheck } from '@hooks/useVerificationCheck';
 import type {
   BackendJob,
   CreateApplicationPayload,
@@ -37,6 +38,7 @@ export default function JobDetailPage() {
   const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
+  const { requireVerification } = useVerificationCheck();
   const isCandidate = user?.role === 'CANDIDATE';
 
   const [job, setJob] = useState<BackendJob | null>(null);
@@ -125,12 +127,20 @@ export default function JobDetailPage() {
 
   const openJobReport = () => {
     if (!job) return;
+    // Check verification before allowing report
+    if (!requireVerification('báo cáo')) {
+      return;
+    }
     setReportConfig({ targetType: 'JOB', targetId: id, targetLabel: job.title });
     setShowReport(true);
   };
 
   const openEmployerReport = () => {
     if (!employerUserId) return;
+    // Check verification before allowing report
+    if (!requireVerification('báo cáo người dùng')) {
+      return;
+    }
     setReportConfig({
       targetType: 'USER',
       targetId: employerUserId,
@@ -152,6 +162,10 @@ export default function JobDetailPage() {
     }
     if (!isCandidate) {
       toast.error('Chỉ ứng viên mới có thể ứng tuyển.');
+      return;
+    }
+    // Check verification before allowing application
+    if (!requireVerification('ứng tuyển')) {
       return;
     }
     setShowApply(true);
@@ -191,6 +205,10 @@ export default function JobDetailPage() {
     }
     if (!isCandidate) {
       toast.error('Chỉ ứng viên mới có thể nhắn tin cho nhà tuyển dụng.');
+      return;
+    }
+    // Check verification before allowing messaging
+    if (!requireVerification('nhắn tin')) {
       return;
     }
     setStartingChat(true);

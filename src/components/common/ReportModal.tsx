@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Button, Form, Modal } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import reportService from '@services/reportService';
+import { useVerificationCheck } from '@hooks/useVerificationCheck';
 import { getErrorMessage } from '@utils/format';
 import type { ReportReason, ReportTargetType } from '@/types/api';
 
@@ -75,6 +76,7 @@ export default function ReportModal({
   onClose,
   onSubmitted,
 }: ReportModalProps) {
+  const { requireVerification } = useVerificationCheck();
   const [reason, setReason] = useState<ReportReason | ''>('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -93,6 +95,12 @@ export default function ReportModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reason) return;
+    
+    // Check verification before allowing report submission
+    if (!requireVerification('gửi báo cáo')) {
+      return;
+    }
+    
     setSubmitting(true);
     setError('');
     try {

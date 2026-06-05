@@ -18,7 +18,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, isLoading } = useAuthStore();
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | React.ReactNode>('');
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -33,6 +33,25 @@ export default function LoginPage() {
     } catch (err: any) {
       const message = err.response?.data?.message || 'Đăng nhập thất bại';
       setError(message);
+      
+      // If error is about identity verification, show link to verify
+      if (message.includes('xác thực danh tính') || message.includes('check email')) {
+        // Extract email from form data for verification link
+        const verifyLink = `/xac-thuc-sau-dang-ky?email=${encodeURIComponent(data.email)}`;
+        setError(
+          <>
+            {message}
+            <div className="mt-2">
+              <a 
+                href={verifyLink} 
+                className="btn btn-sm btn-primary"
+              >
+                Xác thực ngay
+              </a>
+            </div>
+          </>
+        );
+      }
     }
   };
 

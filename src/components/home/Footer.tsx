@@ -58,6 +58,28 @@ export function Footer() {
           </Col>
 
           <Col md={3}>
+            <h6 className="fw-bold mb-3">Về F-Job</h6>
+            <ul className="list-unstyled">
+              <li className="mb-2">
+                <Link to="/ve-chung-toi" className="text-white-50 text-decoration-none small">
+                  Giới thiệu
+                </Link>
+              </li>
+              <li className="mb-2">
+                <Link to="/chinh-sach-bao-mat" className="text-white-50 text-decoration-none small">
+                  <i className="bi bi-shield-check me-1"></i>
+                  Chính sách bảo mật
+                </Link>
+              </li>
+              <li className="mb-2">
+                <Link to="/dieu-khoan-su-dung" className="text-white-50 text-decoration-none small">
+                  Điều khoản sử dụng
+                </Link>
+              </li>
+            </ul>
+          </Col>
+
+          <Col md={3}>
             <h6 className="fw-bold mb-3">Liên hệ</h6>
             <ul className="list-unstyled">
               <li className="mb-2 text-white-50 small">
@@ -70,7 +92,7 @@ export function Footer() {
               </li>
               <li className="mb-2 text-white-50 small">
                 <i className="bi bi-geo-alt me-2" />
-                TP. Hồ Chí Minh, Việt Nam
+                Đà Nẵng, Việt Nam
               </li>
             </ul>
           </Col>
@@ -79,7 +101,20 @@ export function Footer() {
         <hr className="border-secondary" />
 
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-center">
-          <small className="text-white-50">&copy; 2026 F-Job. All rights reserved.</small>
+          <div className="d-flex flex-column flex-md-row gap-2 gap-md-3 text-center text-md-start">
+            <small className="text-white-50">&copy; 2026 F-Job. All rights reserved.</small>
+            <small className="text-white-50">|</small>
+            <small>
+              <Link to="/chinh-sach-bao-mat" className="text-white-50 text-decoration-none">
+                Chính sách bảo mật
+              </Link>
+            </small>
+            <small className="text-white-50">|</small>
+            <small className="text-white-50">
+              <i className="bi bi-shield-check me-1"></i>
+              Tuân thủ Nghị định 13/2023/NĐ-CP
+            </small>
+          </div>
           <div className="d-flex gap-3 mt-2 mt-md-0">
             <a 
               href="https://www.facebook.com/profile.php?id=61590358865664" 

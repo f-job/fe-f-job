@@ -40,6 +40,10 @@ const FacebookSuccessPage = lazy(() => import('@pages/FacebookSuccessPage'));
 const GoogleCallbackPage = lazy(() => import('@pages/GoogleCallbackPage'));
 const TestAvatarPage = lazy(() => import('@pages/TestAvatarPage'));
 const DebugAuthPage = lazy(() => import('@pages/DebugAuthPage'));
+const PrivacyPolicyPage = lazy(() => import('@pages/PrivacyPolicyPage'));
+const TestQRPage = lazy(() => import('@pages/TestQRPage'));
+const DebugVerificationPage = lazy(() => import('@pages/DebugVerificationPage'));
+const PostRegisterVerificationPage = lazy(() => import('@pages/PostRegisterVerificationPage'));
 
 function withSuspense(Component: React.LazyExoticComponent<() => JSX.Element>) {
   return (
@@ -129,8 +133,13 @@ export const routes: RouteObject[] = [
       { path: 'dat-lai-mat-khau', element: withSuspense(ResetPasswordPage) },
       { path: 'xac-thuc-email/:token', element: withSuspense(VerifyEmailPage) },
       { path: 'gui-lai-xac-thuc-email', element: withSuspense(ResendVerificationPage) },
+      { path: 'chinh-sach-bao-mat', element: withSuspense(PrivacyPolicyPage) },
+      { path: 'privacy-policy', element: withSuspense(PrivacyPolicyPage) },
       { path: 'test-avatar', element: withSuspense(TestAvatarPage) },
+      { path: 'test-qr', element: withSuspense(TestQRPage) },
       { path: 'debug-auth', element: withSuspense(DebugAuthPage) },
+      { path: 'debug-verification', element: withSuspense(DebugVerificationPage) },
+      { path: 'xac-thuc-sau-dang-ky', element: withSuspense(PostRegisterVerificationPage) },
     ],
   },
   {

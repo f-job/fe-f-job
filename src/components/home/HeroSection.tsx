@@ -1,6 +1,14 @@
 import { Container, Row, Col, Form, Button } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import './HeroSection.css';
+
+interface Commune {
+  id: number;
+  name: string;
+  code: string;
+  provinceId: number;
+}
 
 // Danh sách ảnh background
 const heroImages = [
@@ -29,6 +37,8 @@ const heroImages = [
 export function HeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [communes, setCommunes] = useState<Commune[]>([]);
+  const [loadingCommunes, setLoadingCommunes] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
@@ -37,6 +47,33 @@ export function HeroSection() {
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
     }, 5000);
+
+    // Load communes for Đà Nẵng (province ID: 48)
+    setLoadingCommunes(true);
+    axios.get('https://production.cas.so/address-kit/2025-07-01/provinces/48/communes')
+      .then((response) => {
+        console.log('Communes API Response (Hero):', response.data);
+        
+        let communeData: Commune[] = [];
+        if (Array.isArray(response.data)) {
+          communeData = response.data;
+        } else if (response.data && typeof response.data === 'object') {
+          if (Array.isArray(response.data.data)) {
+            communeData = response.data.data;
+          } else if (Array.isArray(response.data.communes)) {
+            communeData = response.data.communes;
+          }
+        }
+        
+        console.log('Parsed commune data (Hero):', communeData);
+        setCommunes(communeData);
+      })
+      .catch((error) => {
+        console.error('Failed to load communes (Hero):', error);
+      })
+      .finally(() => {
+        setLoadingCommunes(false);
+      });
 
     return () => clearInterval(interval);
   }, []);
@@ -148,19 +185,31 @@ export function HeroSection() {
                 />
               </Form.Group>
             </Col>
-            <Col md={3}>
+            <Col md={2}>
               <Form.Group>
                 <Form.Label className="search-label">
                   <i className="bi bi-geo-alt me-1"></i>
-                  Địa điểm
+                  Tỉnh / Thành
                 </Form.Label>
-                <Form.Select className="search-input">
-                  <option value="">Tất cả địa điểm</option>
-                  <option>Hồ Chí Minh</option>
-                  <option>Hà Nội</option>
-                  <option>Đà Nẵng</option>
-                  <option>Cần Thơ</option>
-                  <option>Bình Dương</option>
+                <Form.Control
+                  type="text"
+                  value="Đà Nẵng"
+                  disabled
+                  className="search-input bg-light"
+                />
+              </Form.Group>
+            </Col>
+            <Col md={2}>
+              <Form.Group>
+                <Form.Label className="search-label">
+                  <i className="bi bi-pin-map me-1"></i>
+                  Xã / Phường
+                </Form.Label>
+                <Form.Select className="search-input" disabled={loadingCommunes}>
+                  <option value="">Tất cả xã/phường</option>
+                  {communes.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
                 </Form.Select>
               </Form.Group>
             </Col>
@@ -191,10 +240,9 @@ export function HeroSection() {
                 </Form.Select>
               </Form.Group>
             </Col>
-            <Col md={2}>
+            <Col md={1}>
               <Button className="btn-search w-100">
-                <i className="bi bi-search me-2" />
-                Tìm việc
+                <i className="bi bi-search" />
               </Button>
             </Col>
           </Row>
