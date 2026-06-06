@@ -16,6 +16,7 @@ import {
 import toast from 'react-hot-toast';
 import searchService from '@services/searchService';
 import profileService from '@services/profileService';
+import employerCandidateService from '@services/employerCandidateService';
 import { useAuthStore } from '@stores/authStore';
 // TEMPORARY: Comment out UserAvatar to test
 // import UserAvatar from '@components/common/UserAvatar';
@@ -25,7 +26,7 @@ import type {
   PaginationMeta,
   SearchCandidatesQuery,
 } from '@/types/api';
-import { candidateBio, skillLabel } from '@/types/api';
+import { candidateBio, favoriteCandidateId, skillLabel } from '@/types/api';
 import { formatDate, getEntityId, getErrorMessage } from '@utils/format';
 
 const LIMIT = 9;
@@ -52,6 +53,81 @@ export default function CandidateSearchPage() {
   const [preview, setPreview] = useState<MyProfile | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
+
+  // favorites (employer only)
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [favBusyId, setFavBusyId] = useState<string | null>(null);
+
+  // unlocked profiles (employer only) — maps candidate profile id → resume URL
+  const [unlockedCvUrls, setUnlockedCvUrls] = useState<Record<string, string>>({});
+  const [unlockBusyId, setUnlockBusyId] = useState<string | null>(null);
+
+  const loadFavorites = useCallback(async () => {
+    if (!isEmployer) return;
+    try {
+      const { data } = await employerCandidateService.favorites();
+      setFavoriteIds(new Set((data ?? []).map(favoriteCandidateId).filter(Boolean)));
+    } catch {
+      // non-blocking — favorites are a convenience overlay
+    }
+  }, [isEmployer]);
+
+  const toggleFavorite = async (candidateProfileId: string) => {
+    if (!candidateProfileId) return;
+    setFavBusyId(candidateProfileId);
+    const isFav = favoriteIds.has(candidateProfileId);
+    try {
+      if (isFav) {
+        await employerCandidateService.removeFavorite(candidateProfileId);
+        toast.success('Đã bỏ khỏi danh sách yêu thích');
+      } else {
+        await employerCandidateService.addFavorite(candidateProfileId);
+        toast.success('Đã thêm vào danh sách yêu thích');
+      }
+      setFavoriteIds((prev) => {
+        const next = new Set(prev);
+        if (isFav) next.delete(candidateProfileId);
+        else next.add(candidateProfileId);
+        return next;
+      });
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể cập nhật danh sách yêu thích'));
+    } finally {
+      setFavBusyId(null);
+    }
+  };
+
+  const unlockCandidate = async (candidateProfileId: string) => {
+    if (!candidateProfileId) return;
+    if (!window.confirm('Mở khóa hồ sơ này sẽ trừ 1 credit. Tiếp tục?')) return;
+    setUnlockBusyId(candidateProfileId);
+    try {
+      const { data } = await employerCandidateService.unlock(candidateProfileId);
+      const resumeUrl = (data as { candidate?: { resumeUrl?: string } })?.candidate?.resumeUrl;
+      toast.success('Đã mở khóa hồ sơ');
+      if (resumeUrl) {
+        setUnlockedCvUrls((prev) => ({ ...prev, [candidateProfileId]: resumeUrl }));
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể mở khóa hồ sơ (kiểm tra số dư credit)'));
+    } finally {
+      setUnlockBusyId(null);
+    }
+  };
+
+  const downloadCv = async (candidateProfileId: string) => {
+    try {
+      const { data } = await employerCandidateService.downloadCv(candidateProfileId);
+      const url = (data as { url?: string })?.url;
+      if (url) {
+        window.open(url, '_blank', 'noopener');
+      } else {
+        toast.error('Ứng viên chưa có CV.');
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể tải CV (cần mở khóa hồ sơ trước)'));
+    }
+  };
 
   const runSearch = useCallback(
     async (targetPage: number) => {
@@ -81,6 +157,7 @@ export default function CandidateSearchPage() {
 
   useEffect(() => {
     runSearch(1);
+    loadFavorites();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -237,6 +314,17 @@ export default function CandidateSearchPage() {
                       {isEmployer && (
                         <Button
                           size="sm"
+                          variant={favoriteIds.has(getEntityId(c)) ? 'danger' : 'outline-danger'}
+                          disabled={favBusyId === getEntityId(c)}
+                          title={favoriteIds.has(getEntityId(c)) ? 'Bỏ yêu thích' : 'Thêm yêu thích'}
+                          onClick={() => toggleFavorite(getEntityId(c))}
+                        >
+                          <i className={`bi ${favoriteIds.has(getEntityId(c)) ? 'bi-heart-fill' : 'bi-heart'}`} />
+                        </Button>
+                      )}
+                      {isEmployer && (
+                        <Button
+                          size="sm"
                           className="btn-primary-gradient flex-grow-1"
                           disabled={startingChat}
                           onClick={() => handleContact(c.userId)}
@@ -245,6 +333,36 @@ export default function CandidateSearchPage() {
                         </Button>
                       )}
                     </div>
+                    {isEmployer && (
+                      <div className="d-flex gap-2 mt-2">
+                        {unlockedCvUrls[getEntityId(c)] ? (
+                          <Button
+                            size="sm"
+                            variant="outline-success"
+                            className="flex-grow-1"
+                            onClick={() => downloadCv(getEntityId(c))}
+                          >
+                            <i className="bi bi-file-earmark-arrow-down me-1" />Tải CV
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline-warning"
+                            className="flex-grow-1"
+                            disabled={unlockBusyId === getEntityId(c)}
+                            onClick={() => unlockCandidate(getEntityId(c))}
+                          >
+                            {unlockBusyId === getEntityId(c) ? (
+                              <Spinner size="sm" />
+                            ) : (
+                              <>
+                                <i className="bi bi-unlock me-1" />Mở khóa (1 credit)
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </Card.Body>
                 </Card>
               </Col>

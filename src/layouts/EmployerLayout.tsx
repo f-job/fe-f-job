@@ -23,6 +23,12 @@ export default function EmployerLayout() {
             <Nav.Link as={NavLink} to="/tim-ung-vien">
               <i className="bi bi-search me-1" />Tìm ứng viên
             </Nav.Link>
+            <Nav.Link as={NavLink} to="/nha-tuyen-dung/phong-van">
+              <i className="bi bi-calendar-event me-1" />Phỏng vấn
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/nha-tuyen-dung/goi-dich-vu">
+              <i className="bi bi-box-seam me-1" />Gói &amp; Credit
+            </Nav.Link>
             <Nav.Link as={NavLink} to="/tin-nhan">
               <i className="bi bi-chat-dots me-1" />Tin nhắn
             </Nav.Link>

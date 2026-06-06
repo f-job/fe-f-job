@@ -879,3 +879,166 @@ export interface AuditQuery {
   page?: number;
   limit?: number;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Packages & Employer Credit (prefix /packages, /employers/credit*)
+//   Mirrors be-f-job PackagesModule (packages, packages-admin, employer-credit).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A purchasable credit package (GET /packages, /packages/:id). */
+export interface ServicePackage {
+  _id: string;
+  id?: string;
+  name: string;
+  description?: string;
+  /** Cost in VND. */
+  price: number;
+  /** Credits granted on purchase. */
+  credits: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Payload for POST /packages/admin (CreatePackageDto). */
+export interface CreatePackagePayload {
+  name: string;
+  description?: string;
+  price: number;
+  credits: number;
+}
+
+/** Payload for PUT /packages/admin/:id (UpdatePackageDto — partial + isActive). */
+export interface UpdatePackagePayload {
+  name?: string;
+  description?: string;
+  price?: number;
+  credits?: number;
+  isActive?: boolean;
+}
+
+/** An employer's active purchased package subscription (GET /packages/my). */
+export interface PurchasedPackage {
+  packageId: string;
+  name: string;
+  purchasedAt: string;
+  expiresAt: string;
+  isActive: boolean;
+}
+
+/** Employer credit wallet balance (GET /employers/credit-balance). */
+export interface CreditBalance {
+  balance: number;
+}
+
+export type CreditTransactionType =
+  | 'PURCHASE'
+  | 'JOB_BOOST'
+  | 'PROFILE_UNLOCK'
+  | 'REFUND'
+  | 'ADMIN_ADJUST';
+
+/** A single immutable credit-ledger entry. */
+export interface CreditTransaction {
+  _id: string;
+  id?: string;
+  userId: string;
+  type: CreditTransactionType;
+  /** Positive for additions, negative for deductions. */
+  amount: number;
+  balanceAfter: number;
+  packageId?: string;
+  packageName?: string;
+  price?: number;
+  referenceId?: string;
+  description: string;
+  createdAt?: string;
+}
+
+/** Query for POST /employers/credit/transactions + GET /packages/credits/admin. */
+export interface ListTransactionsQuery {
+  page?: number;
+  limit?: number;
+  type?: CreditTransactionType;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Interviews (prefix /employers/interviews)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type InterviewStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show';
+
+export interface Interview {
+  _id: string;
+  id?: string;
+  applicationId: string;
+  candidateId: string;
+  employerId: string;
+  scheduledAt: string;
+  location?: string;
+  meetingLink?: string;
+  note?: string;
+  status: InterviewStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Payload for PUT /employers/interviews/:id (UpdateInterviewDto). */
+export interface UpdateInterviewPayload {
+  scheduledAt?: string;
+  location?: string;
+  meetingLink?: string;
+  note?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Employer ATS pipeline (prefix /employers/jobs/ats) + bulk tools + complete/no-show
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Payload for PUT /employers/jobs/ats/:applicationId/stage (UpdateApplicationStatusDto). */
+export interface UpdateApplicationStagePayload {
+  status: ApplicationStatus;
+}
+
+/** Payload for POST /employers/jobs/ats/:applicationId/schedule (ScheduleInterviewDto). */
+export interface ScheduleInterviewPayload {
+  scheduledAt: string;
+  employerNote?: string;
+}
+
+/** Payload for POST /employers/jobs/ats/:applicationId/reject (RejectApplicationDto). */
+export interface RejectApplicationPayload {
+  reason: string;
+}
+
+/** Payload for POST /employers/emails/bulk-reject (BulkRejectDto). */
+export interface BulkRejectPayload {
+  applicationIds: string[];
+  reason: string;
+}
+
+/** Payload for POST /employers/emails/bulk-interview (BulkInterviewDto). */
+export interface BulkInterviewPayload {
+  applicationIds: string[];
+  scheduledAt: string;
+}
+
+/**
+ * A favorite-candidate record (GET /employers/favorites). `candidateId` is
+ * populated with the candidate profile document by the backend, but may also
+ * arrive as a bare id string depending on population.
+ */
+export interface FavoriteCandidate {
+  _id: string;
+  id?: string;
+  employerId: string;
+  candidateId: string | CandidateSearchResult;
+  createdAt?: string;
+}
+
+/** Resolve the candidate-profile id from a favorite's `candidateId` field. */
+export function favoriteCandidateId(fav: FavoriteCandidate): string {
+  const c = fav.candidateId;
+  if (!c) return '';
+  return typeof c === 'string' ? c : c._id ?? c.id ?? '';
+}

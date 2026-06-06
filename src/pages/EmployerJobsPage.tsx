@@ -7,20 +7,31 @@ import {
   Card,
   Container,
   Dropdown,
+  Form,
   Modal,
   Spinner,
   Table,
 } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import employerJobService from '@services/employerJobService';
+import employerApplicationService from '@services/employerApplicationService';
+import employerCandidateService from '@services/employerCandidateService';
 import type {
+  ApplicationStatus,
   BackendJob,
   EmployerJobApplication,
   JobStatus,
   PaginationMeta,
 } from '@/types/api';
 import { jobStatusLabel, jobStatusVariant } from '@/types/api';
-import { formatDate, formatSalary, getEntityId, getErrorMessage } from '@utils/format';
+import {
+  applicationStatusLabel,
+  applicationStatusVariant,
+  formatDate,
+  formatSalary,
+  getEntityId,
+  getErrorMessage,
+} from '@utils/format';
 
 const STATUS_TABS: { value: JobStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'Tất cả' },
@@ -43,6 +54,9 @@ export default function EmployerJobsPage() {
   const [applicantsJob, setApplicantsJob] = useState<BackendJob | null>(null);
   const [applicants, setApplicants] = useState<EmployerJobApplication[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
+  const [actingId, setActingId] = useState<string | null>(null);
+  const [selectedAppIds, setSelectedAppIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = useCallback(
     async (targetPage: number, status: JobStatus | 'all') => {
@@ -89,6 +103,7 @@ export default function EmployerJobsPage() {
     setApplicantsJob(job);
     setApplicantsLoading(true);
     setApplicants([]);
+    setSelectedAppIds(new Set());
     try {
       const { data } = await employerJobService.applications(getEntityId(job));
       setApplicants(data.data);
@@ -97,6 +112,117 @@ export default function EmployerJobsPage() {
     } finally {
       setApplicantsLoading(false);
     }
+  };
+
+  const toggleSelect = (appId: string) => {
+    setSelectedAppIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(appId)) next.delete(appId);
+      else next.add(appId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (ids: string[]) => {
+    setSelectedAppIds((prev) =>
+      prev.size === ids.length ? new Set() : new Set(ids),
+    );
+  };
+
+  const runBulk = async (label: string, action: () => Promise<unknown>) => {
+    setBulkBusy(true);
+    try {
+      await action();
+      toast.success(label);
+      setSelectedAppIds(new Set());
+      if (applicantsJob) await openApplicants(applicantsJob);
+      await load(page, tab);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Thao tác hàng loạt thất bại'));
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const bulkReject = () => {
+    const ids = [...selectedAppIds];
+    if (ids.length === 0) return;
+    const reason = window.prompt(`Lý do từ chối ${ids.length} ứng viên:`);
+    if (reason === null) return;
+    runBulk('Đã gửi email từ chối hàng loạt', () =>
+      employerCandidateService.bulkReject({
+        applicationIds: ids,
+        reason: reason.trim() || 'Không phù hợp',
+      }),
+    );
+  };
+
+  const bulkInterview = () => {
+    const ids = [...selectedAppIds];
+    if (ids.length === 0) return;
+    const input = window.prompt(
+      `Thời gian phỏng vấn cho ${ids.length} ứng viên (ISO, ví dụ 2026-06-10T09:00):`,
+    );
+    if (!input) return;
+    const scheduledAt = new Date(input);
+    if (Number.isNaN(scheduledAt.getTime())) {
+      toast.error('Thời gian không hợp lệ.');
+      return;
+    }
+    runBulk('Đã gửi email mời phỏng vấn hàng loạt', () =>
+      employerCandidateService.bulkInterview({
+        applicationIds: ids,
+        scheduledAt: scheduledAt.toISOString(),
+      }),
+    );
+  };
+
+  const runApplicantAction = async (
+    application: EmployerJobApplication,
+    label: string,
+    action: () => Promise<unknown>,
+    confirmMsg?: string,
+  ) => {
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
+    const appId = getEntityId(application);
+    setActingId(appId);
+    try {
+      await action();
+      toast.success(label);
+      if (applicantsJob) await openApplicants(applicantsJob);
+      await load(page, tab);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Thao tác thất bại'));
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const scheduleInterview = (application: EmployerJobApplication) => {
+    const input = window.prompt(
+      'Nhập thời gian phỏng vấn (ISO, ví dụ 2026-06-10T09:00). Để trống để hủy:',
+    );
+    if (!input) return;
+    const scheduledAt = new Date(input);
+    if (Number.isNaN(scheduledAt.getTime())) {
+      toast.error('Thời gian không hợp lệ.');
+      return;
+    }
+    runApplicantAction(application, 'Đã hẹn lịch phỏng vấn', () =>
+      employerApplicationService.schedule(getEntityId(application), {
+        scheduledAt: scheduledAt.toISOString(),
+      }),
+    );
+  };
+
+  const rejectApplicant = (application: EmployerJobApplication) => {
+    const reason = window.prompt('Lý do từ chối ứng viên:');
+    if (reason === null) return;
+    runApplicantAction(application, 'Đã từ chối ứng viên', () =>
+      employerApplicationService.reject(getEntityId(application), {
+        reason: reason.trim() || 'Không phù hợp',
+      }),
+    );
   };
 
   return (
@@ -288,30 +414,141 @@ export default function EmployerJobsPage() {
           ) : applicants.length === 0 ? (
             <Alert variant="info" className="mb-0">Chưa có ứng viên nào ứng tuyển.</Alert>
           ) : (
-            <Table responsive hover className="align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>Ứng viên</th>
-                  <th>SĐT</th>
-                  <th>Trạng thái</th>
-                  <th>CV</th>
-                </tr>
-              </thead>
-              <tbody>
-                {applicants.map((a) => (
-                  <tr key={getEntityId(a)}>
-                    <td className="fw-500">{a.candidateName}</td>
-                    <td>{a.candidatePhone ?? '—'}</td>
-                    <td><Badge bg="secondary">{a.status}</Badge></td>
-                    <td>
-                      {a.resumeUrl ? (
-                        <a href={a.resumeUrl} target="_blank" rel="noreferrer">Xem CV</a>
-                      ) : '—'}
-                    </td>
+            <>
+              {selectedAppIds.size > 0 && (
+                <div className="d-flex align-items-center gap-2 mb-2 p-2 bg-light rounded">
+                  <span className="small fw-500">Đã chọn {selectedAppIds.size}</span>
+                  <Button
+                    size="sm"
+                    variant="outline-primary"
+                    disabled={bulkBusy}
+                    onClick={bulkInterview}
+                  >
+                    <i className="bi bi-calendar-event me-1" />Mời phỏng vấn
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline-danger"
+                    disabled={bulkBusy}
+                    onClick={bulkReject}
+                  >
+                    <i className="bi bi-envelope-x me-1" />Từ chối hàng loạt
+                  </Button>
+                  {bulkBusy && <Spinner size="sm" />}
+                </div>
+              )}
+              <Table responsive hover className="align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th style={{ width: 36 }}>
+                      <Form.Check
+                        type="checkbox"
+                        checked={selectedAppIds.size === applicants.length && applicants.length > 0}
+                        onChange={() => toggleSelectAll(applicants.map((a) => getEntityId(a)))}
+                      />
+                    </th>
+                    <th>Ứng viên</th>
+                    <th>SĐT</th>
+                    <th>Trạng thái</th>
+                    <th>CV</th>
+                    <th className="text-end">Thao tác</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody>
+                  {applicants.map((a) => {
+                    const appId = getEntityId(a);
+                    const status = a.status as ApplicationStatus;
+                    const busy = actingId === appId;
+                    const isTerminal = ['Rejected', 'Withdrawn', 'Completed', 'NoShow'].includes(status);
+                    const canAccept = !isTerminal && status !== 'Accepted';
+                    return (
+                      <tr key={appId}>
+                        <td>
+                          <Form.Check
+                            type="checkbox"
+                            checked={selectedAppIds.has(appId)}
+                            onChange={() => toggleSelect(appId)}
+                          />
+                        </td>
+                        <td className="fw-500">{a.candidateName}</td>
+                        <td>{a.candidatePhone ?? '—'}</td>
+                        <td>
+                          <Badge bg={applicationStatusVariant(status)}>
+                            {applicationStatusLabel(status)}
+                          </Badge>
+                        </td>
+                        <td>
+                          {a.resumeUrl ? (
+                            <a href={a.resumeUrl} target="_blank" rel="noreferrer">Xem CV</a>
+                          ) : '—'}
+                        </td>
+                        <td className="text-end">
+                          <Dropdown align="end">
+                            <Dropdown.Toggle size="sm" variant="outline-secondary" disabled={busy}>
+                              {busy ? <Spinner size="sm" /> : 'Xử lý'}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu renderOnMount popperConfig={{ strategy: 'fixed' }}>
+                              {canAccept && (
+                                <Dropdown.Item
+                                  onClick={() =>
+                                    runApplicantAction(a, 'Đã nhận ứng viên', () =>
+                                      employerApplicationService.accept(appId),
+                                    )
+                                  }
+                                >
+                                  <i className="bi bi-check-circle me-2 text-success" />Nhận ứng viên
+                                </Dropdown.Item>
+                              )}
+                              {!isTerminal && (
+                                <Dropdown.Item onClick={() => scheduleInterview(a)}>
+                                  <i className="bi bi-calendar-event me-2 text-primary" />Hẹn phỏng vấn
+                                </Dropdown.Item>
+                              )}
+                              {status === 'Accepted' && (
+                                <>
+                                  <Dropdown.Item
+                                    onClick={() =>
+                                      runApplicantAction(
+                                        a,
+                                        'Đã xác nhận hoàn thành',
+                                        () => employerApplicationService.complete(appId),
+                                        'Xác nhận ứng viên đã hoàn thành ca làm?',
+                                      )
+                                    }
+                                  >
+                                    <i className="bi bi-flag me-2 text-success" />Hoàn thành
+                                  </Dropdown.Item>
+                                  <Dropdown.Item
+                                    onClick={() =>
+                                      runApplicantAction(
+                                        a,
+                                        'Đã báo vắng mặt',
+                                        () => employerApplicationService.noShow(appId),
+                                        'Báo ứng viên vắng mặt (no-show)? Hành động này sẽ trừ điểm uy tín ứng viên.',
+                                      )
+                                    }
+                                  >
+                                    <i className="bi bi-person-x me-2 text-warning" />Báo vắng mặt
+                                  </Dropdown.Item>
+                                </>
+                              )}
+                              {!isTerminal && (
+                                <>
+                                  <Dropdown.Divider />
+                                  <Dropdown.Item className="text-danger" onClick={() => rejectApplicant(a)}>
+                                    <i className="bi bi-x-circle me-2" />Từ chối
+                                  </Dropdown.Item>
+                                </>
+                              )}
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </>
           )}
         </Modal.Body>
       </Modal>

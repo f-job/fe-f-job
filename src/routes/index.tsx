@@ -35,6 +35,8 @@ const AdminAuditLogsPage = lazy(() => import('@pages/AdminAuditLogsPage'));
 const MonitoringPage = lazy(() => import('@pages/MonitoringPage'));
 const PostJobPage = lazy(() => import('@pages/PostJobPage'));
 const EmployerJobsPage = lazy(() => import('@pages/EmployerJobsPage'));
+const EmployerPackagesPage = lazy(() => import('@pages/EmployerPackagesPage'));
+const EmployerInterviewsPage = lazy(() => import('@pages/EmployerInterviewsPage'));
 const FacebookCallbackPage = lazy(() => import('@pages/FacebookCallbackPage'));
 const FacebookSuccessPage = lazy(() => import('@pages/FacebookSuccessPage'));
 const GoogleCallbackPage = lazy(() => import('@pages/GoogleCallbackPage'));
@@ -172,6 +174,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Navigate to="tin-dang" replace /> },
       { path: 'tin-dang', element: withSuspense(EmployerJobsPage) },
+      { path: 'phong-van', element: withSuspense(EmployerInterviewsPage) },
+      { path: 'goi-dich-vu', element: withSuspense(EmployerPackagesPage) },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },
