@@ -1,12 +1,23 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Navbar, Nav, Container, Button, Dropdown, Badge } from 'react-bootstrap';
+import {
+  Navbar,
+  Nav,
+  Container,
+  Button,
+  Dropdown,
+  Badge,
+} from 'react-bootstrap';
 import { useAuthStore } from '@stores/authStore';
 import { useChatStore } from '@stores/chatStore';
 import { NotificationBell } from '@components/common/NotificationBell';
 import { ThemeToggle } from '@components/common/ThemeToggle';
 import UserAvatar from '@components/common/UserAvatar';
-import { disconnectChatSocket, getChatSocket, onNewMessage } from '@services/chatSocket';
+import {
+  disconnectChatSocket,
+  getChatSocket,
+  onNewMessage,
+} from '@services/chatSocket';
 import fjobavatar from '@assets/images/fjobavatar.png';
 import './AppNavbar.css';
 
@@ -48,26 +59,26 @@ export function AppNavbar() {
   };
 
   return (
-    <Navbar bg="white" expand="lg" sticky="top" className="navbar shadow-sm py-2">
+    <Navbar expand="lg" sticky="top" className="app-navbar py-2">
       <Container>
-        <Navbar.Brand as={Link} to="/" className="fw-bold fs-4 d-flex align-items-center">
-          <img
-            src={fjobavatar}
-            alt="F-Job Logo"
-            className="navbar-logo"
-          />
+        <Navbar.Brand
+          as={Link}
+          to="/"
+          className="fw-bold fs-4 d-flex align-items-center"
+        >
+          <img src={fjobavatar} alt="F-Job Logo" className="navbar-logo" />
         </Navbar.Brand>
 
         <Navbar.Toggle aria-controls="main-nav" />
         <Navbar.Collapse id="main-nav">
-          <Nav className="mx-auto">
-            <Nav.Link as={Link} to="/viec-lam" className="fw-500 px-3">
+          <Nav className="mx-auto app-nav-links">
+            <Nav.Link as={Link} to="/viec-lam" className="fw-500">
               Việc làm
             </Nav.Link>
-            <Nav.Link as={Link} to="/su-kien" className="fw-500 px-3">
-              Sự kiện
+            <Nav.Link as={Link} to="/cam-nang-nghe-nghiep" className="fw-500">
+              Cẩm nang nghề nghiệp
             </Nav.Link>
-            <Nav.Link as={Link} to="/ve-chung-toi" className="fw-500 px-3">
+            <Nav.Link as={Link} to="/ve-chung-toi" className="fw-500">
               Về chúng tôi
             </Nav.Link>
           </Nav>
@@ -102,15 +113,16 @@ export function AppNavbar() {
                 <Dropdown align="end">
                   <Dropdown.Toggle
                     variant="light"
-                    className="d-flex align-items-center gap-2 border-0"
-                    style={{ padding: '0.375rem 0.75rem' }}
+                    className="user-menu-toggle d-flex align-items-center gap-2"
                   >
                     <UserAvatar
                       src={user.avatarUrl}
                       alt={user.name ?? user.fullName ?? user.email ?? 'User'}
                       size={32}
                     />
-                    <span className="fw-500">{user.name ?? user.fullName ?? user.email}</span>
+                    <span className="fw-500">
+                      {user.name ?? user.fullName ?? user.email}
+                    </span>
                   </Dropdown.Toggle>
                   <Dropdown.Menu>
                     {user.role === 'CANDIDATE' && (
@@ -120,7 +132,14 @@ export function AppNavbar() {
                     )}
                     {user.role === 'CANDIDATE' && (
                       <Dropdown.Item as={Link} to="/don-ung-tuyen">
-                        <i className="bi bi-file-earmark-text me-2"></i>Đơn ứng tuyển
+                        <i className="bi bi-file-earmark-text me-2"></i>Đơn ứng
+                        tuyển
+                      </Dropdown.Item>
+                    )}
+                    {user.role === 'CANDIDATE' && (
+                      <Dropdown.Item as={Link} to="/lich-su-lam-viec">
+                        <i className="bi bi-clock-history me-2"></i>Lịch sử làm
+                        việc
                       </Dropdown.Item>
                     )}
                     {(user.role === 'EMPLOYER' || user.role === 'ADMIN') && (
@@ -161,7 +180,8 @@ export function AppNavbar() {
                           <i className="bi bi-building me-2"></i>Nhà tuyển dụng
                         </Dropdown.Item>
                         <Dropdown.Item as={Link} to="/admin/jobs">
-                          <i className="bi bi-clipboard-check me-2"></i>Duyệt tin
+                          <i className="bi bi-clipboard-check me-2"></i>Duyệt
+                          tin
                         </Dropdown.Item>
                         <Dropdown.Item as={Link} to="/admin/monitoring">
                           <i className="bi bi-activity me-2"></i>Monitoring
@@ -188,7 +208,8 @@ export function AppNavbar() {
             <Button
               as={Link as any}
               to={
-                isAuthenticated && (user?.role === 'EMPLOYER' || user?.role === 'ADMIN')
+                isAuthenticated &&
+                (user?.role === 'EMPLOYER' || user?.role === 'ADMIN')
                   ? '/dang-tin'
                   : '/dang-ky'
               }
