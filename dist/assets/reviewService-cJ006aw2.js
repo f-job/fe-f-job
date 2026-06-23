@@ -1,1 +1,0 @@
-import{m as r}from"./index-x_7SRPuQ.js";const o={create(e){return r.post("/reviews",e)},listForReviewee(e,t=1,s=10){return r.get("/reviews",{params:{revieweeId:e,page:t,limit:s}})},getTrust(e){return r.get(`/profiles/${e}/trust`)}};export{o as r};

@@ -8,6 +8,8 @@ import { ProtectedRoute } from '@components/auth/ProtectedRoute';
 
 const HomePage = lazy(() => import('@pages/HomePage'));
 const AboutPage = lazy(() => import('@pages/AboutPage'));
+const CareerGuidePage = lazy(() => import('@pages/CareerGuidePage'));
+const CareerGuideDetailPage = lazy(() => import('@pages/CareerGuideDetailPage'));
 const LoginPage = lazy(() => import('@pages/LoginPage'));
 const SignupPage = lazy(() => import('@pages/SignupPage'));
 const ForgotPasswordPage = lazy(() => import('@pages/ForgotPasswordPage'));
@@ -19,6 +21,7 @@ const JobDetailPage = lazy(() => import('@pages/JobDetailPage'));
 const SearchPage = lazy(() => import('@pages/SearchPage'));
 const CandidateSearchPage = lazy(() => import('@pages/CandidateSearchPage'));
 const MyApplicationsPage = lazy(() => import('@pages/MyApplicationsPage'));
+const WorkHistoryPage = lazy(() => import('@pages/WorkHistoryPage'));
 const ProfilePage = lazy(() => import('@pages/ProfilePage'));
 const VerificationPage = lazy(() => import('@pages/VerificationPage'));
 const NotificationsPage = lazy(() => import('@pages/NotificationsPage'));
@@ -62,6 +65,11 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: withSuspense(HomePage) },
       { path: 've-chung-toi', element: withSuspense(AboutPage) },
+      { path: 'cam-nang-nghe-nghiep', element: withSuspense(CareerGuidePage) },
+      {
+        path: 'cam-nang-nghe-nghiep/:slug',
+        element: withSuspense(CareerGuideDetailPage),
+      },
       { path: 'viec-lam', element: withSuspense(JobsPage) },
       { path: 'viec-lam/:id', element: withSuspense(JobDetailPage) },
       { path: 'tim-kiem', element: withSuspense(SearchPage) },
@@ -70,6 +78,14 @@ export const routes: RouteObject[] = [
         element: (
           <ProtectedRoute roles={['CANDIDATE']}>
             {withSuspense(MyApplicationsPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'lich-su-lam-viec',
+        element: (
+          <ProtectedRoute roles={['CANDIDATE']}>
+            {withSuspense(WorkHistoryPage)}
           </ProtectedRoute>
         ),
       },

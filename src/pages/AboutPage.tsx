@@ -57,10 +57,22 @@ const solutions = [
 ];
 
 const steps = [
-  { title: 'Tạo hồ sơ', desc: 'Sinh viên tạo hồ sơ năng lực, cập nhật kỹ năng và thời gian rảnh.' },
-  { title: 'Match nhanh', desc: 'Hệ thống đề xuất công việc phù hợp theo vị trí và lịch rảnh thực tế.' },
-  { title: 'Nhận việc', desc: 'Ứng tuyển và nhận ca làm chỉ trong vài bước, không nhắn tin rời rạc.' },
-  { title: 'Tích uy tín', desc: 'Hoàn thành job, nhận đánh giá và tích luỹ điểm uy tín cho cơ hội tốt hơn.' },
+  {
+    title: 'Tạo hồ sơ',
+    desc: 'Sinh viên tạo hồ sơ năng lực, cập nhật kỹ năng và thời gian rảnh.',
+  },
+  {
+    title: 'Match nhanh',
+    desc: 'Hệ thống đề xuất công việc phù hợp theo vị trí và lịch rảnh thực tế.',
+  },
+  {
+    title: 'Nhận việc',
+    desc: 'Ứng tuyển và nhận ca làm chỉ trong vài bước, không nhắn tin rời rạc.',
+  },
+  {
+    title: 'Tích uy tín',
+    desc: 'Hoàn thành job, nhận đánh giá và tích luỹ điểm uy tín cho cơ hội tốt hơn.',
+  },
 ];
 
 export default function AboutPage() {
@@ -69,16 +81,14 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="about-hero">
         <Container className="about-hero-content text-center">
-          <span className="about-badge">
-            <i className="bi bi-stars me-2" />
-            AI-Driven Gig Economy Platform
-          </span>
+          <span className="about-badge">Nền tảng việc làm thời vụ</span>
           <h1 className="display-5 fw-bold mb-3">
             Về <span style={{ color: '#fff' }}>F-Job</span>
           </h1>
           <p className="lead mb-0 mx-auto opacity-90" style={{ maxWidth: 720 }}>
-            Nền tảng kết nối nhanh giữa nhân sự thời vụ và nhà tổ chức sự kiện — minh bạch,
-            linh hoạt và hiệu quả cho thị trường lao động trẻ Việt Nam.
+            Nền tảng kết nối nhanh giữa nhân sự thời vụ và nhà tổ chức sự kiện —
+            minh bạch, linh hoạt và hiệu quả cho thị trường lao động trẻ Việt
+            Nam.
           </p>
         </Container>
       </section>
@@ -89,8 +99,8 @@ export default function AboutPage() {
           {stats.map((s) => (
             <Col xs={6} lg={3} key={s.label}>
               <div className="stat-card">
-                <div className="stat-number">{s.number}</div>
-                <div className="stat-label">{s.label}</div>
+                <div className="about-stat-number">{s.number}</div>
+                <div className="about-stat-label">{s.label}</div>
               </div>
             </Col>
           ))}
@@ -104,52 +114,66 @@ export default function AboutPage() {
             <Col lg={6}>
               <h2 className="section-title mb-3">Chúng tôi là ai?</h2>
               <p className="text-muted">
-                F-Job là một nền tảng web thông minh dành riêng cho thị trường việc làm phổ thông
-                và ngắn hạn (casual jobs), tập trung vào các công việc sự kiện như hậu cần, lễ tân,
-                hỗ trợ check-in, phụ việc sân khấu và activation.
+                F-Job là một nền tảng web thông minh dành riêng cho thị trường
+                việc làm phổ thông và ngắn hạn (casual jobs), tập trung vào các
+                công việc sự kiện như hậu cần, lễ tân, hỗ trợ check-in, phụ việc
+                sân khấu và activation.
               </p>
               <p className="text-muted mb-0">
-                Khác với hình thức tuyển dụng truyền thống qua hội nhóm mạng xã hội, F-Job cung cấp
-                hệ thống hồ sơ nhân sự chuẩn hoá cùng cơ chế match nhanh theo thời gian và vị trí,
-                giúp quá trình tuyển dụng diễn ra tức thì như mô hình đặt dịch vụ của các ứng dụng
-                công nghệ hiện nay.
+                Khác với hình thức tuyển dụng truyền thống qua hội nhóm mạng xã
+                hội, F-Job cung cấp hệ thống hồ sơ nhân sự chuẩn hoá cùng cơ chế
+                match nhanh theo thời gian và vị trí, giúp quá trình tuyển dụng
+                diễn ra tức thì như mô hình đặt dịch vụ của các ứng dụng công
+                nghệ hiện nay.
               </p>
             </Col>
             <Col lg={6}>
               <Row className="g-3">
                 <Col sm={6}>
                   <div className="value-card">
-                    <div className="value-icon"><i className="bi bi-cpu" /></div>
-                    <h6 className="fw-bold">AI Matching</h6>
+                    <div className="value-icon">
+                      <i className="bi bi-cpu" />
+                    </div>
+                    <h6 className="fw-bold">Match nhanh</h6>
                     <p className="text-muted small mb-0">
-                      Đề xuất việc làm theo vị trí địa lý và lịch rảnh thời gian thực.
+                      Đề xuất việc làm theo vị trí địa lý và lịch rảnh thời gian
+                      thực.
                     </p>
                   </div>
                 </Col>
                 <Col sm={6}>
                   <div className="value-card">
-                    <div className="value-icon"><i className="bi bi-people" /></div>
+                    <div className="value-icon">
+                      <i className="bi bi-people" />
+                    </div>
                     <h6 className="fw-bold">Double Trust</h6>
                     <p className="text-muted small mb-0">
-                      Xác thực hai chiều giữa nhà tuyển dụng có thật và ứng viên thật.
+                      Xác thực hai chiều giữa nhà tuyển dụng có thật và ứng viên
+                      thật.
                     </p>
                   </div>
                 </Col>
                 <Col sm={6}>
                   <div className="value-card">
-                    <div className="value-icon"><i className="bi bi-award" /></div>
+                    <div className="value-icon">
+                      <i className="bi bi-award" />
+                    </div>
                     <h6 className="fw-bold">Credit Score</h6>
                     <p className="text-muted small mb-0">
-                      Điểm uy tín chống "bùng ca", thưởng cho nhân sự làm việc nghiêm túc.
+                      Điểm uy tín chống "bùng ca", thưởng cho nhân sự làm việc
+                      nghiêm túc.
                     </p>
                   </div>
                 </Col>
                 <Col sm={6}>
                   <div className="value-card">
-                    <div className="value-icon"><i className="bi bi-clock-history" /></div>
+                    <div className="value-icon">
+                      <i className="bi bi-clock-history" />
+                    </div>
                     <h6 className="fw-bold">Real-time</h6>
                     <p className="text-muted small mb-0">
-                      Thông báo thời gian thực và quản lý lịch trình làm việc khoa học.
+                      Thông báo thời gian thực và quản lý lịch trình làm việc
+                      khoa học.
                     </p>
                   </div>
                 </Col>
@@ -160,12 +184,16 @@ export default function AboutPage() {
       </section>
 
       {/* Problem vs Solution */}
-      <section className="section" style={{ backgroundColor: 'var(--secondary-bg)' }}>
+      <section
+        className="section"
+        style={{ backgroundColor: 'var(--secondary-bg)' }}
+      >
         <Container>
           <div className="text-center mb-5">
             <h2 className="section-title mb-2">Vấn đề & Giải pháp</h2>
             <p className="text-muted mb-0">
-              F-Job giải quyết tận gốc những bất cập của tuyển dụng nhân sự sự kiện hiện nay.
+              F-Job giải quyết tận gốc những bất cập của tuyển dụng nhân sự sự
+              kiện hiện nay.
             </p>
           </div>
           <Row className="g-4">
@@ -194,7 +222,10 @@ export default function AboutPage() {
                 <ul className="compare-list">
                   {solutions.map((s) => (
                     <li key={s}>
-                      <i className="bi bi-check-circle-fill" style={{ color: '#16a34a' }} />
+                      <i
+                        className="bi bi-check-circle-fill"
+                        style={{ color: '#16a34a' }}
+                      />
                       <span>{s}</span>
                     </li>
                   ))}
@@ -218,7 +249,9 @@ export default function AboutPage() {
             {strengths.map((item) => (
               <Col md={6} lg={4} key={item.title}>
                 <div className="value-card">
-                  <div className="value-icon"><i className={`bi ${item.icon}`} /></div>
+                  <div className="value-icon">
+                    <i className={`bi ${item.icon}`} />
+                  </div>
                   <h6 className="fw-bold mb-2">{item.title}</h6>
                   <p className="text-muted small mb-0">{item.desc}</p>
                 </div>
@@ -229,11 +262,16 @@ export default function AboutPage() {
       </section>
 
       {/* How it works */}
-      <section className="section" style={{ backgroundColor: 'var(--secondary-bg)' }}>
+      <section
+        className="section"
+        style={{ backgroundColor: 'var(--secondary-bg)' }}
+      >
         <Container>
           <div className="text-center mb-5">
             <h2 className="section-title mb-2">F-Job hoạt động như thế nào?</h2>
-            <p className="text-muted mb-0">Bốn bước đơn giản để kết nối nhân sự và công việc.</p>
+            <p className="text-muted mb-0">
+              Bốn bước đơn giản để kết nối nhân sự và công việc.
+            </p>
           </div>
           <Row className="g-4">
             {steps.map((step, idx) => (
@@ -252,7 +290,14 @@ export default function AboutPage() {
         <Container>
           <Row className="justify-content-center">
             <Col lg={9} className="text-center">
-              <span className="about-badge" style={{ background: 'var(--secondary-bg)', color: 'var(--primary)', border: 'none' }}>
+              <span
+                className="about-badge"
+                style={{
+                  background: 'var(--secondary-bg)',
+                  color: 'var(--primary)',
+                  border: 'none',
+                }}
+              >
                 <i className="bi bi-eye me-2" />
                 Tầm nhìn
               </span>
@@ -260,11 +305,12 @@ export default function AboutPage() {
                 Xây dựng hệ sinh thái việc làm linh hoạt & đáng tin cậy
               </h2>
               <p className="text-muted">
-                F-Job hướng tới việc giúp sinh viên và nhà tuyển dụng kết nối, quản lý công việc
-                ngắn hạn một cách dễ dàng hơn, chính xác hơn và hiệu quả hơn. Đây không chỉ là một
-                trang web tuyển dụng — mà là giải pháp toàn diện cho thị trường việc làm tự do
-                (Gig Economy), từ tự động hoá tìm kiếm nhân sự bằng AI, xác thực uy tín hai chiều
-                cho đến quản lý lịch trình làm việc khoa học.
+                F-Job hướng tới việc giúp sinh viên và nhà tuyển dụng kết nối,
+                quản lý công việc ngắn hạn một cách dễ dàng hơn, chính xác hơn
+                và hiệu quả hơn. Đây không chỉ là một trang web tuyển dụng — mà
+                là giải pháp toàn diện cho thị trường việc làm tự do (Gig
+                Economy), từ tự động hoá tìm kiếm nhân sự bằng AI, xác thực uy
+                tín hai chiều cho đến quản lý lịch trình làm việc khoa học.
               </p>
             </Col>
           </Row>
@@ -277,7 +323,8 @@ export default function AboutPage() {
           <div className="about-cta">
             <h2 className="fw-bold mb-3">Sẵn sàng bắt đầu cùng F-Job?</h2>
             <p className="opacity-90 mb-4">
-              Tham gia ngay để tìm việc sự kiện phù hợp hoặc tuyển nhân sự thời vụ nhanh chóng.
+              Tham gia ngay để tìm việc sự kiện phù hợp hoặc tuyển nhân sự thời
+              vụ nhanh chóng.
             </p>
             <div className="d-flex gap-3 justify-content-center flex-wrap">
               <Button as={Link as any} to="/viec-lam" variant="light" size="lg">
