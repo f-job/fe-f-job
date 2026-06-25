@@ -14,6 +14,17 @@ export function ProtectedRoute({ children, roles }: Props) {
     return <Navigate to="/dang-nhap" replace />;
   }
 
+  // Check if user needs identity verification
+  const userWithVerification = user as any;
+  if (userWithVerification?.needsVerification) {
+    return (
+      <Navigate 
+        to={`/xac-thuc-sau-dang-ky?email=${encodeURIComponent(user!.email)}`} 
+        replace 
+      />
+    );
+  }
+
   if (roles && roles.length > 0 && (!user || !roles.includes(user.role))) {
     return <Navigate to="/" replace />;
   }

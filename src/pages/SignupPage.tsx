@@ -59,8 +59,11 @@ export default function SignupPage() {
         phone: data.phone || undefined,
         address: data.address || undefined,
       });
-      toast.success('Đăng ký ứng viên thành công! Bạn có thể đăng nhập ngay.');
-      navigate('/dang-nhap');
+      
+      toast.success('Đăng ký thành công! Vui lòng xác thực danh tính để tiếp tục.');
+      
+      // Redirect to post-registration verification with email
+      navigate(`/xac-thuc-sau-dang-ky?email=${encodeURIComponent(data.email)}`);
     } catch (err) {
       setError(getErrorMessage(err, 'Đăng ký thất bại'));
     }
@@ -78,8 +81,11 @@ export default function SignupPage() {
         address: data.address || undefined,
         website: data.website || undefined,
       });
-      toast.success('Đăng ký nhà tuyển dụng thành công! Tài khoản đang chờ admin duyệt.');
-      navigate('/dang-nhap');
+      
+      toast.success('Đăng ký thành công! Vui lòng xác thực danh tính để tiếp tục.');
+      
+      // Redirect to post-registration verification with email
+      navigate(`/xac-thuc-sau-dang-ky?email=${encodeURIComponent(data.email)}`);
     } catch (err) {
       setError(getErrorMessage(err, 'Đăng ký thất bại'));
     }

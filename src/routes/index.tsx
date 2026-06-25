@@ -8,6 +8,8 @@ import { ProtectedRoute } from '@components/auth/ProtectedRoute';
 
 const HomePage = lazy(() => import('@pages/HomePage'));
 const AboutPage = lazy(() => import('@pages/AboutPage'));
+const CareerGuidePage = lazy(() => import('@pages/CareerGuidePage'));
+const CareerGuideDetailPage = lazy(() => import('@pages/CareerGuideDetailPage'));
 const LoginPage = lazy(() => import('@pages/LoginPage'));
 const SignupPage = lazy(() => import('@pages/SignupPage'));
 const ForgotPasswordPage = lazy(() => import('@pages/ForgotPasswordPage'));
@@ -19,6 +21,7 @@ const JobDetailPage = lazy(() => import('@pages/JobDetailPage'));
 const SearchPage = lazy(() => import('@pages/SearchPage'));
 const CandidateSearchPage = lazy(() => import('@pages/CandidateSearchPage'));
 const MyApplicationsPage = lazy(() => import('@pages/MyApplicationsPage'));
+const WorkHistoryPage = lazy(() => import('@pages/WorkHistoryPage'));
 const ProfilePage = lazy(() => import('@pages/ProfilePage'));
 const VerificationPage = lazy(() => import('@pages/VerificationPage'));
 const NotificationsPage = lazy(() => import('@pages/NotificationsPage'));
@@ -35,11 +38,17 @@ const AdminAuditLogsPage = lazy(() => import('@pages/AdminAuditLogsPage'));
 const MonitoringPage = lazy(() => import('@pages/MonitoringPage'));
 const PostJobPage = lazy(() => import('@pages/PostJobPage'));
 const EmployerJobsPage = lazy(() => import('@pages/EmployerJobsPage'));
+const EmployerPackagesPage = lazy(() => import('@pages/EmployerPackagesPage'));
+const EmployerInterviewsPage = lazy(() => import('@pages/EmployerInterviewsPage'));
 const FacebookCallbackPage = lazy(() => import('@pages/FacebookCallbackPage'));
 const FacebookSuccessPage = lazy(() => import('@pages/FacebookSuccessPage'));
 const GoogleCallbackPage = lazy(() => import('@pages/GoogleCallbackPage'));
 const TestAvatarPage = lazy(() => import('@pages/TestAvatarPage'));
 const DebugAuthPage = lazy(() => import('@pages/DebugAuthPage'));
+const PrivacyPolicyPage = lazy(() => import('@pages/PrivacyPolicyPage'));
+const TestQRPage = lazy(() => import('@pages/TestQRPage'));
+const DebugVerificationPage = lazy(() => import('@pages/DebugVerificationPage'));
+const PostRegisterVerificationPage = lazy(() => import('@pages/PostRegisterVerificationPage'));
 
 function withSuspense(Component: React.LazyExoticComponent<() => JSX.Element>) {
   return (
@@ -56,6 +65,11 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: withSuspense(HomePage) },
       { path: 've-chung-toi', element: withSuspense(AboutPage) },
+      { path: 'cam-nang-nghe-nghiep', element: withSuspense(CareerGuidePage) },
+      {
+        path: 'cam-nang-nghe-nghiep/:slug',
+        element: withSuspense(CareerGuideDetailPage),
+      },
       { path: 'viec-lam', element: withSuspense(JobsPage) },
       { path: 'viec-lam/:id', element: withSuspense(JobDetailPage) },
       { path: 'tim-kiem', element: withSuspense(SearchPage) },
@@ -64,6 +78,14 @@ export const routes: RouteObject[] = [
         element: (
           <ProtectedRoute roles={['CANDIDATE']}>
             {withSuspense(MyApplicationsPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'lich-su-lam-viec',
+        element: (
+          <ProtectedRoute roles={['CANDIDATE']}>
+            {withSuspense(WorkHistoryPage)}
           </ProtectedRoute>
         ),
       },
@@ -129,8 +151,13 @@ export const routes: RouteObject[] = [
       { path: 'dat-lai-mat-khau', element: withSuspense(ResetPasswordPage) },
       { path: 'xac-thuc-email/:token', element: withSuspense(VerifyEmailPage) },
       { path: 'gui-lai-xac-thuc-email', element: withSuspense(ResendVerificationPage) },
+      { path: 'chinh-sach-bao-mat', element: withSuspense(PrivacyPolicyPage) },
+      { path: 'privacy-policy', element: withSuspense(PrivacyPolicyPage) },
       { path: 'test-avatar', element: withSuspense(TestAvatarPage) },
+      { path: 'test-qr', element: withSuspense(TestQRPage) },
       { path: 'debug-auth', element: withSuspense(DebugAuthPage) },
+      { path: 'debug-verification', element: withSuspense(DebugVerificationPage) },
+      { path: 'xac-thuc-sau-dang-ky', element: withSuspense(PostRegisterVerificationPage) },
     ],
   },
   {
@@ -163,6 +190,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Navigate to="tin-dang" replace /> },
       { path: 'tin-dang', element: withSuspense(EmployerJobsPage) },
+      { path: 'phong-van', element: withSuspense(EmployerInterviewsPage) },
+      { path: 'goi-dich-vu', element: withSuspense(EmployerPackagesPage) },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

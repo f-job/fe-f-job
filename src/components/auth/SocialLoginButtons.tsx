@@ -23,10 +23,19 @@ export function SocialLoginButtons({ mode }: SocialLoginButtonsProps) {
     setLoadingProvider('google');
     try {
       await loginWithGoogle();
-      toast.success(`${actionLabel} bằng Google thành công!`);
-      navigate('/');
-    } catch (error) {
-      toast.error(getErrorMessage(error));
+      
+      // Check if user needs verification
+      const user = useAuthStore.getState().user as any;
+      if (user?.needsVerification) {
+        toast('Vui lòng hoàn thành xác thực danh tính', { icon: '⚠️' });
+        navigate(`/xac-thuc-sau-dang-ky?email=${encodeURIComponent(user.email)}`);
+      } else {
+        toast.success(`${actionLabel} bằng Google thành công!`);
+        navigate('/');
+      }
+    } catch (error: any) {
+      const errorMsg = getErrorMessage(error);
+      toast.error(errorMsg);
     } finally {
       setLoadingProvider(null);
     }

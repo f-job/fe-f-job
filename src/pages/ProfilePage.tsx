@@ -13,9 +13,11 @@ import {
 } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import profileService from '@services/profileService';
+import verificationService from '@services/verificationService';
 import ReviewsList from '@components/common/ReviewsList';
 import TrustScoreCard from '@components/common/TrustScoreCard';
 import UserAvatar from '@components/common/UserAvatar';
+import { VerificationModal } from '@components/common/VerificationModal';
 import { useAuthStore } from '@stores/authStore';
 import type {
   AddSkillPayload,
@@ -50,6 +52,11 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [savingInfo, setSavingInfo] = useState(false);
+
+  // Verification
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<any>(null);
+  const [loadingVerification, setLoadingVerification] = useState(false);
 
   // General info form
   const [info, setInfo] = useState({
@@ -93,12 +100,33 @@ export default function ProfilePage() {
     try {
       const { data } = await profileService.getMine();
       applyProfile(data);
+      
+      // Load verification status
+      loadVerificationStatus();
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể tải hồ sơ'));
     } finally {
       setLoading(false);
     }
   }, [applyProfile]);
+
+  const loadVerificationStatus = async () => {
+    setLoadingVerification(true);
+    try {
+      const { data } = await verificationService.getStatus();
+      setVerificationStatus(data);
+    } catch (err) {
+      // Ignore error - user may not be verified yet
+      console.log('Verification status:', err);
+    } finally {
+      setLoadingVerification(false);
+    }
+  };
+
+  const handleVerificationSuccess = () => {
+    loadVerificationStatus();
+    toast.success('Xác thực danh tính thành công!');
+  };
 
   useEffect(() => {
     load();
@@ -284,6 +312,57 @@ export default function ProfilePage() {
               </div>
               <h5 className="fw-bold mb-0">{profile?.fullName || user?.name}</h5>
               <p className="text-muted small">{user?.email}</p>
+
+              {/* Verification Badge/Button */}
+              <div className="mb-3">
+                {loadingVerification ? (
+                  <Spinner size="sm" />
+                ) : verificationStatus?.isVerified ? (
+                  <div className="p-3 bg-success bg-opacity-10 border border-success rounded">
+                    <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                      <i className="bi bi-shield-check-fill text-success fs-4" />
+                      <span className="fw-bold text-success">Đã xác thực danh tính</span>
+                    </div>
+                    <div className="small text-muted text-center">
+                      <div>
+                        <i className="bi bi-person-check me-1" />
+                        {verificationStatus.fullName}
+                      </div>
+                      {verificationStatus.verifiedAt && (
+                        <div className="mt-1">
+                          <i className="bi bi-calendar-check me-1" />
+                          {new Date(verificationStatus.verifiedAt).toLocaleDateString('vi-VN')}
+                        </div>
+                      )}
+                      {verificationStatus.verificationMethod && (
+                        <div className="mt-1">
+                          <Badge bg="success" className="mt-1">
+                            {verificationStatus.verificationMethod === 'cccd_qr' && 'CCCD QR'}
+                            {verificationStatus.verificationMethod === 'cccd_ocr' && 'CCCD OCR'}
+                            {verificationStatus.verificationMethod === 'manual' && 'Thủ công'}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-warning bg-opacity-10 border border-warning rounded">
+                    <div className="text-center mb-2">
+                      <i className="bi bi-shield-exclamation text-warning fs-4" />
+                      <div className="small text-muted mt-1">Chưa xác thực danh tính</div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => setShowVerificationModal(true)}
+                      className="w-100"
+                    >
+                      <i className="bi bi-shield-check me-2" />
+                      Xác thực ngay
+                    </Button>
+                  </div>
+                )}
+              </div>
 
               <div className="d-flex align-items-center justify-content-center gap-2 mt-3">
                 <Form.Check
@@ -682,6 +761,13 @@ export default function ProfilePage() {
           </Modal.Footer>
         </Form>
       </Modal>
+
+      {/* Verification Modal */}
+      <VerificationModal
+        show={showVerificationModal}
+        onHide={() => setShowVerificationModal(false)}
+        onSuccess={handleVerificationSuccess}
+      />
     </Container>
   );
 }

@@ -25,6 +25,7 @@ import {
 } from '@services/chatSocket';
 import { useAuthStore } from '@stores/authStore';
 import { useChatStore } from '@stores/chatStore';
+import { useVerificationCheck } from '@hooks/useVerificationCheck';
 import type { ChatMessage, Conversation } from '@/types/api';
 import { getEntityId, getRefId, getErrorMessage, timeAgo } from '@utils/format';
 
@@ -83,6 +84,7 @@ export default function MessagesPage() {
   const { user } = useAuthStore();
   const myId = user?.id ?? '';
   const refreshUnreadCount = useChatStore((s) => s.refreshUnreadCount);
+  const { requireVerification } = useVerificationCheck();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkRecipient = searchParams.get('to');
@@ -300,6 +302,11 @@ export default function MessagesPage() {
     e.preventDefault();
     const text = draft.trim();
     if (!text || !activeId) return;
+    
+    // Check verification before allowing message send
+    if (!requireVerification('gửi tin nhắn')) {
+      return;
+    }
     
     // Clear draft immediately
     setDraft('');

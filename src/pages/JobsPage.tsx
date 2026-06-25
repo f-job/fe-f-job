@@ -12,6 +12,7 @@ import {
   Row,
   Spinner,
 } from 'react-bootstrap';
+import axios from 'axios';
 import jobService from '@services/jobService';
 import type {
   BackendJob,
@@ -22,6 +23,13 @@ import type {
   PaginationMeta,
 } from '@/types/api';
 import { formatDate, formatSalary, getErrorMessage, getEntityId } from '@utils/format';
+
+interface Commune {
+  id: number;
+  name: string;
+  code: string;
+  provinceId: number;
+}
 
 const JOB_TYPES: CasualJobType[] = ['Part-time', 'Event', 'Seasonal'];
 const LEVELS: ExperienceLevel[] = ['No Experience', '< 6 Months', '> 6 Months'];
@@ -87,10 +95,12 @@ export default function JobsPage() {
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [communes, setCommunes] = useState<Commune[]>([]);
+  const [loadingCommunes, setLoadingCommunes] = useState(false);
 
   // Controlled filter inputs (seeded from URL query string)
   const [keyword, setKeyword] = useState(searchParams.get('keyword') ?? '');
-  const [location, setLocation] = useState(searchParams.get('location') ?? '');
+  const [district, setDistrict] = useState(searchParams.get('district') ?? '');
   const [jobType, setJobType] = useState(searchParams.get('job_type') ?? '');
   const [level, setLevel] = useState(searchParams.get('level') ?? '');
   const [sort, setSort] = useState<JobSortOption>(
@@ -103,7 +113,8 @@ export default function JobsPage() {
     setError('');
     const query: ListJobsQuery = {
       keyword: searchParams.get('keyword') || undefined,
-      location: searchParams.get('location') || undefined,
+      location: 'Đà Nẵng', // Force to Đà Nẵng
+      district: searchParams.get('district') || undefined,
       job_type: (searchParams.get('job_type') as CasualJobType) || undefined,
       level: (searchParams.get('level') as ExperienceLevel) || undefined,
       sort: (searchParams.get('sort') as JobSortOption) || 'newest',
@@ -124,12 +135,39 @@ export default function JobsPage() {
 
   useEffect(() => {
     loadJobs();
+    
+    // Load communes for Đà Nẵng (province ID: 48)
+    setLoadingCommunes(true);
+    axios.get('https://production.cas.so/address-kit/2025-07-01/provinces/48/communes')
+      .then((response) => {
+        console.log('Communes API Response (JobsPage):', response.data);
+        
+        let communeData: Commune[] = [];
+        if (Array.isArray(response.data)) {
+          communeData = response.data;
+        } else if (response.data && typeof response.data === 'object') {
+          if (Array.isArray(response.data.data)) {
+            communeData = response.data.data;
+          } else if (Array.isArray(response.data.communes)) {
+            communeData = response.data.communes;
+          }
+        }
+        
+        console.log('Parsed commune data (JobsPage):', communeData);
+        setCommunes(communeData);
+      })
+      .catch((error) => {
+        console.error('Failed to load communes (JobsPage):', error);
+      })
+      .finally(() => {
+        setLoadingCommunes(false);
+      });
   }, [loadJobs]);
 
   const applyFilters = (nextPage = 1) => {
     const next: Record<string, string> = {};
     if (keyword) next.keyword = keyword;
-    if (location) next.location = location;
+    if (district) next.district = district;
     if (jobType) next.job_type = jobType;
     if (level) next.level = level;
     if (sort) next.sort = sort;
@@ -160,12 +198,26 @@ export default function JobsPage() {
                   onChange={(e) => setKeyword(e.target.value)}
                 />
               </Col>
-              <Col md={3}>
+              <Col md={2}>
                 <Form.Control
-                  placeholder="Khu vực (vd: Đà Nẵng)"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  type="text"
+                  value="Đà Nẵng"
+                  disabled
+                  className="bg-light"
+                  title="Hiện tại chỉ hỗ trợ khu vực Đà Nẵng"
                 />
+              </Col>
+              <Col md={2}>
+                <Form.Select 
+                  value={district} 
+                  onChange={(e) => setDistrict(e.target.value)}
+                  disabled={loadingCommunes}
+                >
+                  <option value="">Tất cả xã/phường</option>
+                  {communes.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </Form.Select>
               </Col>
               <Col md={2}>
                 <Form.Select value={jobType} onChange={(e) => setJobType(e.target.value)}>
@@ -175,9 +227,9 @@ export default function JobsPage() {
                   ))}
                 </Form.Select>
               </Col>
-              <Col md={2}>
+              <Col md={1}>
                 <Form.Select value={level} onChange={(e) => setLevel(e.target.value)}>
-                  <option value="">Kinh nghiệm</option>
+                  <option value="">KN</option>
                   {LEVELS.map((l) => (
                     <option key={l} value={l}>{l}</option>
                   ))}

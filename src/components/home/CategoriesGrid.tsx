@@ -11,7 +11,7 @@ const INDUSTRY_ICONS: Record<string, string> = {
   'Sự kiện': 'bi-calendar-event',
   'Giao hàng': 'bi-truck',
   'Bán lẻ': 'bi-shop',
-  'Concert': 'bi-music-note-beamed',
+  Concert: 'bi-music-note-beamed',
   'Hội chợ': 'bi-shop-window',
   'Triển lãm': 'bi-easel',
   'Hội nghị': 'bi-building',
@@ -48,7 +48,7 @@ export function CategoriesGrid() {
   return (
     <section className="section section-categories">
       <Container>
-        <div className="categories-wrapper rounded-4 p-4 shadow-sm">
+        <div className="categories-wrapper p-3 p-md-4">
           {isLoading ? (
             <div className="text-center py-4">
               <Spinner />
@@ -61,7 +61,9 @@ export function CategoriesGrid() {
                     to={`/viec-lam?keyword=${encodeURIComponent(stat.industry)}`}
                     className="category-item"
                   >
-                    <i className={`bi ${iconFor(stat.industry)} category-icon`} />
+                    <i
+                      className={`bi ${iconFor(stat.industry)} category-icon`}
+                    />
                     <div>
                       <span className="category-count">{stat.count} việc</span>
                       <span className="category-name">{stat.industry}</span>
@@ -83,10 +85,15 @@ export function CategoriesGrid() {
             <Row className="g-3">
               {categories.map((cat) => (
                 <Col xs={6} md={4} lg={3} key={cat.id}>
-                  <Link to={`/viec-lam?keyword=${encodeURIComponent(cat.name)}`} className="category-item">
+                  <Link
+                    to={`/viec-lam?keyword=${encodeURIComponent(cat.name)}`}
+                    className="category-item"
+                  >
                     <i className={`bi ${cat.icon} category-icon`} />
                     <div>
-                      <span className="category-count">{cat.jobCount} việc</span>
+                      <span className="category-count">
+                        {cat.jobCount} việc
+                      </span>
                       <span className="category-name">{cat.name}</span>
                     </div>
                   </Link>

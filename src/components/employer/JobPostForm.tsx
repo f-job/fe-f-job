@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
+import axios from 'axios';
 import searchService from '@services/searchService';
 import type {
   CasualJobType,
@@ -8,9 +9,15 @@ import type {
   Industry,
   JobTypeOption,
   LevelOption,
-  Province,
   SalaryType,
 } from '@/types/api';
+
+interface Commune {
+  id: number;
+  name: string;
+  code: string;
+  provinceId: number;
+}
 
 const SALARY_TYPES: { value: SalaryType; label: string }[] = [
   { value: 'hourly', label: 'Theo giờ' },
@@ -37,14 +44,15 @@ export function JobPostForm({
   onCancel,
 }: JobPostFormProps) {
   const [industries, setIndustries] = useState<Industry[]>([]);
-  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [communes, setCommunes] = useState<Commune[]>([]);
   const [levels, setLevels] = useState<LevelOption[]>([]);
   const [jobTypes, setJobTypes] = useState<JobTypeOption[]>([]);
+  const [loadingCommunes, setLoadingCommunes] = useState(false);
 
   const [form, setForm] = useState<CreateEmployerJobPayload>({
     title: initial?.title ?? '',
     description: initial?.description ?? '',
-    location: initial?.location ?? '',
+    location: initial?.location ?? 'Đà Nẵng',
     district: initial?.district ?? '',
     salaryType: initial?.salaryType ?? 'hourly',
     salaryAmount: initial?.salaryAmount ?? 30000,
@@ -60,9 +68,39 @@ export function JobPostForm({
 
   useEffect(() => {
     searchService.listIndustries().then((r) => setIndustries(r.data)).catch(() => {});
-    searchService.listProvinces().then((r) => setProvinces(r.data)).catch(() => {});
     searchService.listLevels().then((r) => setLevels(r.data)).catch(() => {});
     searchService.listJobTypes().then((r) => setJobTypes(r.data)).catch(() => {});
+    
+    // Load communes for Đà Nẵng (province ID: 48)
+    setLoadingCommunes(true);
+    axios.get('https://production.cas.so/address-kit/2025-07-01/provinces/48/communes')
+      .then((response) => {
+        console.log('Communes API Response:', response.data);
+        
+        // Handle different response structures
+        let communeData: Commune[] = [];
+        
+        if (Array.isArray(response.data)) {
+          communeData = response.data;
+        } else if (response.data && typeof response.data === 'object') {
+          // Check for nested data structure
+          if (Array.isArray(response.data.data)) {
+            communeData = response.data.data;
+          } else if (Array.isArray(response.data.communes)) {
+            communeData = response.data.communes;
+          }
+        }
+        
+        console.log('Parsed commune data:', communeData);
+        setCommunes(communeData);
+      })
+      .catch((error) => {
+        console.error('Failed to load communes:', error);
+        console.error('Error details:', error.response?.data);
+      })
+      .finally(() => {
+        setLoadingCommunes(false);
+      });
   }, []);
 
   const set = <K extends keyof CreateEmployerJobPayload>(key: K, value: CreateEmployerJobPayload[K]) =>
@@ -82,6 +120,7 @@ export function JobPostForm({
     e.preventDefault();
     const payload: CreateEmployerJobPayload = {
       ...form,
+      location: 'Đà Nẵng', // Force location to Đà Nẵng
       salaryAmount: Number(form.salaryAmount),
       slots: form.slots ? Number(form.slots) : undefined,
       district: form.district || undefined,
@@ -136,24 +175,33 @@ export function JobPostForm({
 
         <Col md={6}>
           <Form.Label>Tỉnh / Thành *</Form.Label>
-          <Form.Select
-            required
-            value={form.location}
-            onChange={(e) => set('location', e.target.value)}
-          >
-            <option value="">-- Chọn tỉnh/thành --</option>
-            {provinces.map((p) => (
-              <option key={p.id} value={p.name}>{p.name}</option>
-            ))}
-          </Form.Select>
+          <Form.Control
+            type="text"
+            value="Đà Nẵng"
+            disabled
+            className="bg-light"
+          />
+          <Form.Control.Feedback type="invalid">
+            Hiện tại chỉ hỗ trợ khu vực Đà Nẵng
+          </Form.Control.Feedback>
         </Col>
         <Col md={6}>
-          <Form.Label>Quận / Huyện</Form.Label>
-          <Form.Control
-            placeholder="Vd: Hải Châu"
+          <Form.Label>Xã / Phường *</Form.Label>
+          <Form.Select
+            required
             value={form.district}
             onChange={(e) => set('district', e.target.value)}
-          />
+            disabled={loadingCommunes}
+          >
+            <option value="">-- Chọn xã/phường --</option>
+            {communes.map((c) => (
+              <option key={c.id} value={c.name}>{c.name}</option>
+            ))}
+          </Form.Select>
+          {loadingCommunes && <Form.Text className="text-muted d-block">Đang tải...</Form.Text>}
+          {!loadingCommunes && communes.length === 0 && (
+            <Form.Text className="text-danger d-block">Không thể tải danh sách xã/phường. Vui lòng kiểm tra console.</Form.Text>
+          )}
         </Col>
 
         <Col md={4}>

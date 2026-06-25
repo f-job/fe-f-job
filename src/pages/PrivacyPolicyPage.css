@@ -1,0 +1,82 @@
+.privacy-policy-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.privacy-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.privacy-policy-page h2 {
+  color: #2d3748;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.privacy-policy-page h3 {
+  color: #4a5568;
+}
+
+.privacy-policy-page section {
+  scroll-margin-top: 100px;
+}
+
+.privacy-policy-page .border-rounded {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.privacy-policy-page .border-rounded:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.privacy-policy-page .alert {
+  border-left: 4px solid;
+}
+
+.privacy-policy-page .alert-info {
+  border-left-color: #3182ce;
+}
+
+.privacy-policy-page .alert-success {
+  border-left-color: #38a169;
+}
+
+.privacy-policy-page .alert-warning {
+  border-left-color: #dd6b20;
+}
+
+.privacy-policy-page ul {
+  padding-left: 1.5rem;
+}
+
+.privacy-policy-page ul li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.privacy-policy-page a {
+  color: #667eea;
+  font-weight: 500;
+}
+
+.privacy-policy-page a:hover {
+  color: #764ba2;
+}
+
+/* Print styles */
+@media print {
+  .privacy-header {
+    background: #667eea !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .privacy-policy-page .alert {
+    border: 1px solid #ccc !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
