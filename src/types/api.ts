@@ -636,6 +636,7 @@ export interface EmployerJobApplication {
   noteByEmployer?: string;
   isViewed: boolean;
   createdAt?: string;
+  reviewed?: boolean;
 }
 
 export interface EmployerJobApplicationsResponse {

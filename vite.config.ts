@@ -23,11 +23,11 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'https://cc7d-42-116-239-137.ngrok-free.app',
+        target: 'https://be-f-job-1.onrender.com',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'https://cc7d-42-116-239-137.ngrok-free.app',
+        target: 'https://be-f-job-1.onrender.com',
         ws: true,
       },
     },

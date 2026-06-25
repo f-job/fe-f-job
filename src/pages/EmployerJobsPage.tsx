@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import employerJobService from '@services/employerJobService';
 import employerApplicationService from '@services/employerApplicationService';
 import employerCandidateService from '@services/employerCandidateService';
+import reviewService from '@/services/reviewService';
 import type {
   ApplicationStatus,
   BackendJob,
@@ -57,6 +58,11 @@ export default function EmployerJobsPage() {
   const [actingId, setActingId] = useState<string | null>(null);
   const [selectedAppIds, setSelectedAppIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewApplication, setReviewApplication] =
+    useState<EmployerJobApplication | null>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
 
   const load = useCallback(
     async (targetPage: number, status: JobStatus | 'all') => {
@@ -107,6 +113,7 @@ export default function EmployerJobsPage() {
     try {
       const { data } = await employerJobService.applications(getEntityId(job));
       setApplicants(data.data);
+      console.log(data.data)
     } catch (err) {
       toast.error(getErrorMessage(err, 'Không thể tải danh sách ứng viên'));
     } finally {
@@ -175,6 +182,35 @@ export default function EmployerJobsPage() {
         scheduledAt: scheduledAt.toISOString(),
       }),
     );
+  };
+
+  const submitReview = async () => {
+    if (!reviewApplication) return;
+
+    try {
+      await reviewService.create({
+        applicationId: getEntityId(reviewApplication),
+        rating,
+        comment,
+      });
+
+      setApplicants(prev =>
+        prev.map(item =>
+          getEntityId(item) === getEntityId(reviewApplication)
+            ? { ...item, reviewed: true }
+            : item
+        )
+      );
+
+      toast.success('Đánh giá thành công');
+
+      setShowReviewModal(false);
+      setReviewApplication(null);
+      setRating(5);
+      setComment('');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể gửi đánh giá'));
+    }
   };
 
   const runApplicantAction = async (
@@ -473,8 +509,15 @@ export default function EmployerJobsPage() {
                         <td className="fw-500">{a.candidateName}</td>
                         <td>{a.candidatePhone ?? '—'}</td>
                         <td>
-                          <Badge bg={applicationStatusVariant(status)}>
-                            {applicationStatusLabel(status)}
+                          <Badge bg={
+                            status === 'Completed' && a.reviewed
+                              ? 'success'
+                              : applicationStatusVariant(status)
+                          }>
+                            {status === 'Completed' && a.reviewed
+                              ? 'Đã đánh giá'
+                              : applicationStatusLabel(status)
+                            }
                           </Badge>
                         </td>
                         <td>
@@ -511,7 +554,12 @@ export default function EmployerJobsPage() {
                                       runApplicantAction(
                                         a,
                                         'Đã xác nhận hoàn thành',
-                                        () => employerApplicationService.complete(appId),
+                                        async () => {
+                                          await employerApplicationService.complete(appId);
+
+                                          setReviewApplication(a);
+                                          setShowReviewModal(true);
+                                        },
                                         'Xác nhận ứng viên đã hoàn thành ca làm?',
                                       )
                                     }
@@ -532,6 +580,17 @@ export default function EmployerJobsPage() {
                                   </Dropdown.Item>
                                 </>
                               )}
+                              {status === 'Completed' && !a.reviewed && (
+                                <Dropdown.Item
+                                  onClick={() => {
+                                    setReviewApplication(a);
+                                    setShowReviewModal(true);
+                                  }}
+                                >
+                                  <i className="bi bi-star me-2 text-warning" />
+                                  Đánh giá ứng viên
+                                </Dropdown.Item>
+                              )}
                               {!isTerminal && (
                                 <>
                                   <Dropdown.Divider />
@@ -551,6 +610,68 @@ export default function EmployerJobsPage() {
             </>
           )}
         </Modal.Body>
+      </Modal>
+      <Modal
+        show={showReviewModal}
+        onHide={() => setShowReviewModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Đánh giá ứng viên</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <div className="mb-3">
+            <label className="form-label">
+              Điểm đánh giá (1-5)
+            </label>
+
+            <Form.Select
+              value={rating}
+              onChange={(e) =>
+                setRating(Number(e.target.value))
+              }
+            >
+              <option value={5}>⭐⭐⭐⭐⭐ (5)</option>
+              <option value={4}>⭐⭐⭐⭐ (4)</option>
+              <option value={3}>⭐⭐⭐ (3)</option>
+              <option value={2}>⭐⭐ (2)</option>
+              <option value={1}>⭐ (1)</option>
+            </Form.Select>
+          </div>
+
+          <div>
+            <label className="form-label">
+              Nhận xét
+            </label>
+
+            <Form.Control
+              as="textarea"
+              rows={4}
+              value={comment}
+              onChange={(e) =>
+                setComment(e.target.value)
+              }
+              placeholder="Nhận xét về ứng viên..."
+            />
+          </div>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowReviewModal(false)}
+          >
+            Đóng
+          </Button>
+
+          <Button
+            variant="primary"
+            onClick={submitReview}
+          >
+            Gửi đánh giá
+          </Button>
+        </Modal.Footer>
       </Modal>
     </Container>
   );
