@@ -896,6 +896,8 @@ export interface ServicePackage {
   price: number;
   /** Credits granted on purchase. */
   credits: number;
+  /** Expiry duration in days after purchase. */
+  durationDays: number;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -907,6 +909,7 @@ export interface CreatePackagePayload {
   description?: string;
   price: number;
   credits: number;
+  durationDays?: number;
 }
 
 /** Payload for PUT /packages/admin/:id (UpdatePackageDto — partial + isActive). */
@@ -915,6 +918,7 @@ export interface UpdatePackagePayload {
   description?: string;
   price?: number;
   credits?: number;
+  durationDays?: number;
   isActive?: boolean;
 }
 
@@ -924,6 +928,8 @@ export interface PurchasedPackage {
   name: string;
   purchasedAt: string;
   expiresAt: string;
+  originalCredits: number;
+  remainingCredits: number;
   isActive: boolean;
 }
 
@@ -931,6 +937,38 @@ export interface PurchasedPackage {
 export interface CreditBalance {
   balance: number;
 }
+
+/** Detailed credit wallet balance (GET /payments/balance). */
+export interface DetailedCreditBalance {
+  total: number;
+  available: number;
+  expiringPoints: number;
+  expiringAt: string | null;
+}
+
+/** Master credit costs configured by admin. */
+export interface CreditConfig {
+  _id?: string;
+  unlockCvPoints: number;
+  buyCvPoints: number;
+  pinJobPoints: number;
+  urgentJobPoints: number;
+  refreshJobPoints: number;
+  type?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type UpdateCreditConfigPayload = Partial<
+  Pick<
+    CreditConfig,
+    | 'unlockCvPoints'
+    | 'buyCvPoints'
+    | 'pinJobPoints'
+    | 'urgentJobPoints'
+    | 'refreshJobPoints'
+  >
+>;
 
 export type CreditTransactionType =
   | 'PURCHASE'
@@ -954,6 +992,13 @@ export interface CreditTransaction {
   referenceId?: string;
   description: string;
   createdAt?: string;
+}
+
+export interface PurchasePackageResponse {
+  transactionId: string;
+  packageName: string;
+  creditsCredited: number;
+  newBalance: number;
 }
 
 /** Query for POST /employers/credit/transactions + GET /packages/credits/admin. */

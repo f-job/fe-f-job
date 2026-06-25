@@ -46,6 +46,8 @@ const emptyEducation: EducationForm = {
   degree: '',
 };
 
+const VIETNAM_PHONE_RE = /^(\+84|0)[3-9]\d{8}$/;
+
 export default function ProfilePage() {
   const { user } = useAuthStore();
   const [profile, setProfile] = useState<MyProfile | null>(null);
@@ -134,9 +136,18 @@ export default function ProfilePage() {
 
   const handleSaveInfo = async (e: React.FormEvent) => {
     e.preventDefault();
+    const phone = info.phone.trim();
+    if (!phone) {
+      toast.error('Số điện thoại không được để trống');
+      return;
+    }
+    if (!VIETNAM_PHONE_RE.test(phone)) {
+      toast.error('Số điện thoại không hợp lệ');
+      return;
+    }
     setSavingInfo(true);
     try {
-      const { data } = await profileService.update(info);
+      const { data } = await profileService.update({ ...info, phone });
       applyProfile(data);
       toast.success('Đã lưu hồ sơ');
     } catch (err) {
@@ -466,9 +477,15 @@ export default function ProfilePage() {
                   <Col md={6}>
                     <Form.Label>Số điện thoại</Form.Label>
                     <Form.Control
+                      required
                       value={info.phone}
                       onChange={(e) => setInfo({ ...info, phone: e.target.value })}
+                      isInvalid={!info.phone.trim()}
+                      placeholder="0912345678"
                     />
+                    <Form.Control.Feedback type="invalid">
+                      Số điện thoại không được để trống
+                    </Form.Control.Feedback>
                   </Col>
                   <Col md={6}>
                     <Form.Label>Tỉnh / Thành phố</Form.Label>

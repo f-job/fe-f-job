@@ -63,6 +63,7 @@ export default function EmployerJobsPage() {
     useState<EmployerJobApplication | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
+  const refreshCost = 5;
 
   const load = useCallback(
     async (targetPage: number, status: JobStatus | 'all') => {
@@ -367,10 +368,14 @@ export default function EmployerJobsPage() {
                             </Dropdown.Item>
                             <Dropdown.Item
                               onClick={() =>
-                                runAction('Đã đẩy tin lên đầu', () => employerJobService.refresh(id))
+                                runAction(
+                                  'Đã đẩy tin lên đầu',
+                                  () => employerJobService.refresh(id),
+                                  `Đẩy tin này sẽ trừ ${refreshCost} credit. Tiếp tục?`,
+                                )
                               }
                             >
-                              <i className="bi bi-arrow-up-circle me-2" />Đẩy tin
+                              <i className="bi bi-arrow-up-circle me-2" />Đẩy tin ({refreshCost} credit)
                             </Dropdown.Item>
                             <Dropdown.Item
                               onClick={() =>

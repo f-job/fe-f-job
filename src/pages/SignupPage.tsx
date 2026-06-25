@@ -14,7 +14,11 @@ type AccountType = 'candidate' | 'employer';
 const candidateSchema = z.object({
   fullName: z.string().min(2, 'Tên phải có ít nhất 2 ký tự').max(99),
   email: z.string().email('Email không hợp lệ'),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .trim()
+    .min(1, 'Số điện thoại không được để trống')
+    .regex(/^(\+84|0)[3-9]\d{8}$/, 'Số điện thoại không hợp lệ'),
   address: z.string().optional(),
   password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự').max(100),
   confirmPassword: z.string(),
@@ -56,7 +60,7 @@ export default function SignupPage() {
         email: data.email,
         password: data.password,
         fullName: data.fullName,
-        phone: data.phone || undefined,
+        phone: data.phone,
         address: data.address || undefined,
       });
       
@@ -151,7 +155,15 @@ export default function SignupPage() {
                 <Col sm={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>Số điện thoại</Form.Label>
-                    <Form.Control placeholder="0912345678" {...candidateForm.register('phone')} />
+                    <Form.Control
+                      placeholder="0912345678"
+                      {...candidateForm.register('phone')}
+                      isInvalid={!!candidateForm.formState.errors.phone}
+                      required
+                    />
+                    <Form.Control.Feedback type="invalid">
+                      {candidateForm.formState.errors.phone?.message}
+                    </Form.Control.Feedback>
                   </Form.Group>
                 </Col>
                 <Col sm={6}>
