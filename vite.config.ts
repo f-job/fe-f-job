@@ -23,11 +23,11 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'https://0c9d-14-233-186-38.ngrok-free.app',
+        target: 'https://cc7d-42-116-239-137.ngrok-free.app',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'https://0c9d-14-233-186-38.ngrok-free.app',
+        target: 'https://cc7d-42-116-239-137.ngrok-free.app',
         ws: true,
       },
     },

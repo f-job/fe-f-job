@@ -3,14 +3,21 @@ import { API_BASE_URL } from '@/config/env';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
+  },
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
+
+  config.headers['ngrok-skip-browser-warning'] = 'true';
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
@@ -23,6 +30,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       const refreshToken = localStorage.getItem('refreshToken');
+
       if (!refreshToken) {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
@@ -32,10 +40,21 @@ api.interceptors.response.use(
       }
 
       try {
-        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
+        const { data } = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          { refreshToken },
+          {
+            headers: {
+              'ngrok-skip-browser-warning': 'true',
+            },
+          }
+        );
+
         localStorage.setItem('accessToken', data.accessToken);
         localStorage.setItem('refreshToken', data.refreshToken);
+
         originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+
         return api(originalRequest);
       } catch {
         localStorage.removeItem('accessToken');
