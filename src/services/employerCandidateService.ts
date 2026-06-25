@@ -37,7 +37,10 @@ const employerCandidateService = {
 
   /** POST /employers/candidates/:id/unlock — unlock a profile (spends credit). */
   unlock(id: string) {
-    return api.post<{ message: string }>(`/employers/candidates/${id}/unlock`);
+    return api.post<{
+      message: string;
+      candidate?: CandidateSearchResult & { resumeUrl?: string };
+    }>(`/employers/candidates/${id}/unlock`);
   },
 
   /** GET /employers/ats/:applicationId — ATS view for a given application. */

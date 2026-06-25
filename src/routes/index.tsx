@@ -35,10 +35,12 @@ const AdminReviewsPage = lazy(() => import('@pages/AdminReviewsPage'));
 const AdminVerificationsPage = lazy(() => import('@pages/AdminVerificationsPage'));
 const AdminReportsPage = lazy(() => import('@pages/AdminReportsPage'));
 const AdminAuditLogsPage = lazy(() => import('@pages/AdminAuditLogsPage'));
+const AdminPackagesPage = lazy(() => import('@pages/AdminPackagesPage'));
 const MonitoringPage = lazy(() => import('@pages/MonitoringPage'));
 const PostJobPage = lazy(() => import('@pages/PostJobPage'));
 const EmployerJobsPage = lazy(() => import('@pages/EmployerJobsPage'));
 const EmployerPackagesPage = lazy(() => import('@pages/EmployerPackagesPage'));
+const EmployerProfilePage = lazy(() => import('@pages/EmployerProfilePage'));
 const EmployerInterviewsPage = lazy(() => import('@pages/EmployerInterviewsPage'));
 const FacebookCallbackPage = lazy(() => import('@pages/FacebookCallbackPage'));
 const FacebookSuccessPage = lazy(() => import('@pages/FacebookSuccessPage'));
@@ -177,6 +179,7 @@ export const routes: RouteObject[] = [
       { path: 'verifications', element: withSuspense(AdminVerificationsPage) },
       { path: 'reports', element: withSuspense(AdminReportsPage) },
       { path: 'audit-logs', element: withSuspense(AdminAuditLogsPage) },
+      { path: 'packages', element: withSuspense(AdminPackagesPage) },
       { path: 'monitoring', element: withSuspense(MonitoringPage) },
     ],
   },
@@ -189,6 +192,7 @@ export const routes: RouteObject[] = [
     ),
     children: [
       { index: true, element: <Navigate to="tin-dang" replace /> },
+      { path: 'ho-so', element: withSuspense(EmployerProfilePage) },
       { path: 'tin-dang', element: withSuspense(EmployerJobsPage) },
       { path: 'phong-van', element: withSuspense(EmployerInterviewsPage) },
       { path: 'goi-dich-vu', element: withSuspense(EmployerPackagesPage) },

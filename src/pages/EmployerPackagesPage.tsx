@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import packageService from '@services/packageService';
 import type {
   CreditTransaction,
+  DetailedCreditBalance,
   PurchasedPackage,
   ServicePackage,
 } from '@/types/api';
@@ -30,6 +31,7 @@ const TX_TYPE_LABEL: Record<string, string> = {
 export default function EmployerPackagesPage() {
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [balance, setBalance] = useState<number | null>(null);
+  const [detailedBalance, setDetailedBalance] = useState<DetailedCreditBalance | null>(null);
   const [mine, setMine] = useState<PurchasedPackage[]>([]);
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,12 +44,18 @@ export default function EmployerPackagesPage() {
     try {
       const [pkgs, bal, purchased, tx] = await Promise.all([
         packageService.listActive(),
-        packageService.creditBalance(),
+        packageService.detailedBalance().catch(() => packageService.creditBalance()),
         packageService.myPurchased(),
         packageService.creditTransactions({ page: 1, limit: 20 }),
       ]);
       setPackages(pkgs.data);
-      setBalance(bal.data?.balance ?? 0);
+      if ('balance' in bal.data) {
+        setBalance(bal.data.balance ?? 0);
+        setDetailedBalance(null);
+      } else {
+        setBalance(bal.data?.total ?? 0);
+        setDetailedBalance(bal.data);
+      }
       setMine(purchased.data ?? []);
       setTransactions(tx.data?.data ?? []);
     } catch (err) {
@@ -96,6 +104,12 @@ export default function EmployerPackagesPage() {
           <Card.Body className="py-2 px-4 text-center">
             <div className="small text-muted">Số dư credit</div>
             <div className="h4 fw-bold text-primary mb-0">{balance ?? 0}</div>
+            {detailedBalance?.expiringPoints ? (
+              <div className="small text-warning">
+                {detailedBalance.expiringPoints} sắp hết hạn
+                {detailedBalance.expiringAt ? ` (${formatDateTime(detailedBalance.expiringAt)})` : ''}
+              </div>
+            ) : null}
           </Card.Body>
         </Card>
       </div>
@@ -120,6 +134,9 @@ export default function EmployerPackagesPage() {
                     )}
                     <div className="mb-2">
                       <Badge bg="primary" className="me-2">{pkg.credits} credit</Badge>
+                      <Badge bg="light" text="dark">
+                        Hạn {pkg.durationDays ?? 30} ngày
+                      </Badge>
                     </div>
                     <div className="h4 fw-bold text-success mb-3">{formatVnd(pkg.price)}</div>
                     <Button
@@ -151,6 +168,7 @@ export default function EmployerPackagesPage() {
                 <thead>
                   <tr>
                     <th>Gói</th>
+                    <th className="text-end">Credit còn lại</th>
                     <th>Ngày mua</th>
                     <th>Hết hạn</th>
                     <th>Trạng thái</th>
@@ -160,6 +178,10 @@ export default function EmployerPackagesPage() {
                   {mine.map((p, i) => (
                     <tr key={`${p.packageId}-${i}`}>
                       <td className="fw-500">{p.name}</td>
+                      <td className="text-end">
+                        <span className="fw-500">{p.remainingCredits ?? 0}</span>
+                        <span className="text-muted small"> / {p.originalCredits ?? 0}</span>
+                      </td>
                       <td className="small text-muted">{formatDateTime(p.purchasedAt)}</td>
                       <td className="small text-muted">{formatDateTime(p.expiresAt)}</td>
                       <td>

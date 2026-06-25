@@ -9,7 +9,7 @@ import { useAuthStore } from '@stores/authStore';
  * Returns verification status and a function to check before performing actions
  */
 export function useVerificationCheck() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const navigate = useNavigate();
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -17,6 +17,12 @@ export function useVerificationCheck() {
   const checkVerificationStatus = useCallback(async () => {
     if (!isAuthenticated) {
       setIsVerified(null);
+      setLoading(false);
+      return;
+    }
+
+    if (user?.role !== 'CANDIDATE') {
+      setIsVerified(true);
       setLoading(false);
       return;
     }
@@ -30,7 +36,7 @@ export function useVerificationCheck() {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.role]);
 
   useEffect(() => {
     checkVerificationStatus();
@@ -51,6 +57,10 @@ export function useVerificationCheck() {
         return false;
       }
 
+      if (user?.role !== 'CANDIDATE') {
+        return true;
+      }
+
       if (isVerified === null || loading) {
         toast.error('Đang kiểm tra xác thực, vui lòng thử lại');
         return false;
@@ -67,7 +77,7 @@ export function useVerificationCheck() {
 
       return true;
     },
-    [isAuthenticated, isVerified, loading, navigate]
+    [isAuthenticated, isVerified, loading, navigate, user?.role]
   );
 
   return {

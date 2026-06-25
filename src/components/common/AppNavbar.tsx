@@ -149,6 +149,9 @@ export function AppNavbar() {
                         <Dropdown.Item as={Link} to="/nha-tuyen-dung/tin-dang">
                           <i className="bi bi-briefcase me-2"></i>Tin của tôi
                         </Dropdown.Item>
+                        <Dropdown.Item as={Link} to="/nha-tuyen-dung/ho-so">
+                          <i className="bi bi-building me-2"></i>Hồ sơ công ty
+                        </Dropdown.Item>
                         <Dropdown.Item as={Link} to="/dang-tin">
                           <i className="bi bi-plus-circle me-2"></i>Đăng tin mới
                         </Dropdown.Item>
