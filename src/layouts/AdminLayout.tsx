@@ -34,6 +34,9 @@ export default function AdminLayout() {
             <Nav.Link as={NavLink} to="/admin/audit-logs">
               Nhật ký
             </Nav.Link>
+            <Nav.Link as={NavLink} to="/admin/packages">
+              Gói &amp; Credit
+            </Nav.Link>
             <Nav.Link as={NavLink} to="/admin/monitoring">
               Monitoring
             </Nav.Link>

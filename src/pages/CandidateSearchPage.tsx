@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import searchService from '@services/searchService';
 import profileService from '@services/profileService';
 import employerCandidateService from '@services/employerCandidateService';
+import packageService from '@services/packageService';
 import { useAuthStore } from '@stores/authStore';
 // TEMPORARY: Comment out UserAvatar to test
 // import UserAvatar from '@components/common/UserAvatar';
@@ -58,9 +59,20 @@ export default function CandidateSearchPage() {
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favBusyId, setFavBusyId] = useState<string | null>(null);
 
-  // unlocked profiles (employer only) — maps candidate profile id → resume URL
-  const [unlockedCvUrls, setUnlockedCvUrls] = useState<Record<string, string>>({});
+  // unlocked profiles (employer only) — maps candidate profile id → contact details
+  const [unlockedContacts, setUnlockedContacts] = useState<Record<string, { phone?: string; resumeUrl?: string }>>({});
   const [unlockBusyId, setUnlockBusyId] = useState<string | null>(null);
+  const [unlockCost, setUnlockCost] = useState(10);
+
+  const loadCreditConfig = useCallback(async () => {
+    if (!isEmployer) return;
+    try {
+      const { data } = await packageService.creditConfig();
+      setUnlockCost(data.unlockCvPoints ?? 10);
+    } catch {
+      // Keep the backend default visible if the config request is unavailable.
+    }
+  }, [isEmployer]);
 
   const loadFavorites = useCallback(async () => {
     if (!isEmployer) return;
@@ -99,15 +111,19 @@ export default function CandidateSearchPage() {
 
   const unlockCandidate = async (candidateProfileId: string) => {
     if (!candidateProfileId) return;
-    if (!window.confirm('Mở khóa hồ sơ này sẽ trừ 1 credit. Tiếp tục?')) return;
+    if (!window.confirm(`Mở khóa số điện thoại và CV của ứng viên này sẽ trừ ${unlockCost} credit. Tiếp tục?`)) return;
     setUnlockBusyId(candidateProfileId);
     try {
       const { data } = await employerCandidateService.unlock(candidateProfileId);
-      const resumeUrl = (data as { candidate?: { resumeUrl?: string } })?.candidate?.resumeUrl;
-      toast.success('Đã mở khóa hồ sơ');
-      if (resumeUrl) {
-        setUnlockedCvUrls((prev) => ({ ...prev, [candidateProfileId]: resumeUrl }));
-      }
+      const candidate = (data as { candidate?: { phone?: string; resumeUrl?: string } })?.candidate;
+      toast.success('Đã mở khóa liên hệ ứng viên');
+      setUnlockedContacts((prev) => ({
+        ...prev,
+        [candidateProfileId]: {
+          phone: candidate?.phone,
+          resumeUrl: candidate?.resumeUrl,
+        },
+      }));
     } catch (err) {
       toast.error(getErrorMessage(err, 'Không thể mở khóa hồ sơ (kiểm tra số dư credit)'));
     } finally {
@@ -158,6 +174,7 @@ export default function CandidateSearchPage() {
   useEffect(() => {
     runSearch(1);
     loadFavorites();
+    loadCreditConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -335,15 +352,34 @@ export default function CandidateSearchPage() {
                     </div>
                     {isEmployer && (
                       <div className="d-flex gap-2 mt-2">
-                        {unlockedCvUrls[getEntityId(c)] ? (
-                          <Button
-                            size="sm"
-                            variant="outline-success"
-                            className="flex-grow-1"
-                            onClick={() => downloadCv(getEntityId(c))}
-                          >
-                            <i className="bi bi-file-earmark-arrow-down me-1" />Tải CV
-                          </Button>
+                        {unlockedContacts[getEntityId(c)] ? (
+                          <>
+                            {unlockedContacts[getEntityId(c)].phone ? (
+                              <Button
+                                as="a"
+                                href={`tel:${unlockedContacts[getEntityId(c)].phone}`}
+                                size="sm"
+                                variant="outline-success"
+                                className="flex-grow-1"
+                              >
+                                <i className="bi bi-telephone me-1" />
+                                {unlockedContacts[getEntityId(c)].phone}
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="outline-secondary" className="flex-grow-1" disabled>
+                                Chưa có SĐT
+                              </Button>
+                            )}
+                            {unlockedContacts[getEntityId(c)].resumeUrl && (
+                              <Button
+                                size="sm"
+                                variant="outline-primary"
+                                onClick={() => downloadCv(getEntityId(c))}
+                              >
+                                <i className="bi bi-file-earmark-arrow-down me-1" />CV
+                              </Button>
+                            )}
+                          </>
                         ) : (
                           <Button
                             size="sm"
@@ -356,7 +392,7 @@ export default function CandidateSearchPage() {
                               <Spinner size="sm" />
                             ) : (
                               <>
-                                <i className="bi bi-unlock me-1" />Mở khóa (1 credit)
+                                <i className="bi bi-unlock me-1" />Mở khóa liên hệ ({unlockCost} credit)
                               </>
                             )}
                           </Button>

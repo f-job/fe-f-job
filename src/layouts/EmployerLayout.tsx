@@ -17,6 +17,9 @@ export default function EmployerLayout() {
             <Nav.Link as={NavLink} to="/nha-tuyen-dung/tin-dang">
               <i className="bi bi-briefcase me-1" />Tin của tôi
             </Nav.Link>
+            <Nav.Link as={NavLink} to="/nha-tuyen-dung/ho-so">
+              <i className="bi bi-building me-1" />Hồ sơ công ty
+            </Nav.Link>
             <Nav.Link as={NavLink} to="/dang-tin">
               <i className="bi bi-plus-circle me-1" />Đăng tin
             </Nav.Link>

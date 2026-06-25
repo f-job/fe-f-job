@@ -57,6 +57,7 @@ export default function EmployerJobsPage() {
   const [actingId, setActingId] = useState<string | null>(null);
   const [selectedAppIds, setSelectedAppIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const refreshCost = 5;
 
   const load = useCallback(
     async (targetPage: number, status: JobStatus | 'all') => {
@@ -331,10 +332,14 @@ export default function EmployerJobsPage() {
                             </Dropdown.Item>
                             <Dropdown.Item
                               onClick={() =>
-                                runAction('Đã đẩy tin lên đầu', () => employerJobService.refresh(id))
+                                runAction(
+                                  'Đã đẩy tin lên đầu',
+                                  () => employerJobService.refresh(id),
+                                  `Đẩy tin này sẽ trừ ${refreshCost} credit. Tiếp tục?`,
+                                )
                               }
                             >
-                              <i className="bi bi-arrow-up-circle me-2" />Đẩy tin
+                              <i className="bi bi-arrow-up-circle me-2" />Đẩy tin ({refreshCost} credit)
                             </Dropdown.Item>
                             <Dropdown.Item
                               onClick={() =>

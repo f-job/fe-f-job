@@ -36,7 +36,7 @@ export interface RegisterCandidatePayload {
   email: string;
   password: string;
   fullName: string;
-  phone?: string;
+  phone: string;
   address?: string;
   resumeUrl?: string;
 }
