@@ -39,7 +39,7 @@ const employerCandidateService = {
   unlock(id: string) {
     return api.post<{
       message: string;
-      candidate?: CandidateSearchResult & { resumeUrl?: string };
+      candidate?: CandidateSearchResult & { resumeUrl?: string; email?: string };
     }>(`/employers/candidates/${id}/unlock`);
   },
 

@@ -19,6 +19,8 @@ import profileService from '@services/profileService';
 import employerCandidateService from '@services/employerCandidateService';
 import packageService from '@services/packageService';
 import { useAuthStore } from '@stores/authStore';
+import TrustScoreCard from '@components/common/TrustScoreCard';
+import ReviewsList from '@components/common/ReviewsList';
 // TEMPORARY: Comment out UserAvatar to test
 // import UserAvatar from '@components/common/UserAvatar';
 import type {
@@ -52,6 +54,8 @@ export default function CandidateSearchPage() {
 
   // preview modal
   const [preview, setPreview] = useState<MyProfile | null>(null);
+  const [previewCandidate, setPreviewCandidate] = useState<CandidateSearchResult | null>(null);
+  const [previewCandidateId, setPreviewCandidateId] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
 
@@ -60,7 +64,7 @@ export default function CandidateSearchPage() {
   const [favBusyId, setFavBusyId] = useState<string | null>(null);
 
   // unlocked profiles (employer only) — maps candidate profile id → contact details
-  const [unlockedContacts, setUnlockedContacts] = useState<Record<string, { phone?: string; resumeUrl?: string }>>({});
+  const [unlockedContacts, setUnlockedContacts] = useState<Record<string, { phone?: string; email?: string; resumeUrl?: string }>>({});
   const [unlockBusyId, setUnlockBusyId] = useState<string | null>(null);
   const [unlockCost, setUnlockCost] = useState(10);
 
@@ -115,12 +119,13 @@ export default function CandidateSearchPage() {
     setUnlockBusyId(candidateProfileId);
     try {
       const { data } = await employerCandidateService.unlock(candidateProfileId);
-      const candidate = (data as { candidate?: { phone?: string; resumeUrl?: string } })?.candidate;
+      const candidate = (data as { candidate?: { phone?: string; email?: string; resumeUrl?: string } })?.candidate;
       toast.success('Đã mở khóa liên hệ ứng viên');
       setUnlockedContacts((prev) => ({
         ...prev,
         [candidateProfileId]: {
           phone: candidate?.phone,
+          email: candidate?.email,
           resumeUrl: candidate?.resumeUrl,
         },
       }));
@@ -186,6 +191,8 @@ export default function CandidateSearchPage() {
   const openPreview = async (row: CandidateSearchResult) => {
     setPreviewLoading(true);
     setPreview(null);
+    setPreviewCandidate(row);
+    setPreviewCandidateId(getEntityId(row));
     try {
       const { data } = await profileService.preview(row.userId);
       setPreview(data);
@@ -209,6 +216,15 @@ export default function CandidateSearchPage() {
       setStartingChat(false);
     }
   };
+
+  // Older candidate documents use `bio` and string skills, whereas newer
+  // profile documents use `summary` and rated skill objects. Keep the preview
+  // useful for both shapes while the data is gradually migrated.
+  const previewBio = preview?.summary || (previewCandidate ? candidateBio(previewCandidate) : '');
+  const previewSkills = preview?.skills?.length ? preview.skills : (previewCandidate?.skills ?? []);
+  const previewLocation = [preview?.location ?? previewCandidate?.location, preview?.district ?? previewCandidate?.district]
+    .filter(Boolean)
+    .join(', ') || preview?.address || previewCandidate?.address;
 
   return (
     <Container className="py-4">
@@ -351,7 +367,7 @@ export default function CandidateSearchPage() {
                       )}
                     </div>
                     {isEmployer && (
-                      <div className="d-flex gap-2 mt-2">
+                      <div className="d-flex gap-2 mt-2 flex-wrap">
                         {unlockedContacts[getEntityId(c)] ? (
                           <>
                             {unlockedContacts[getEntityId(c)].phone ? (
@@ -368,6 +384,18 @@ export default function CandidateSearchPage() {
                             ) : (
                               <Button size="sm" variant="outline-secondary" className="flex-grow-1" disabled>
                                 Chưa có SĐT
+                              </Button>
+                            )}
+                            {unlockedContacts[getEntityId(c)].email && (
+                              <Button
+                                as="a"
+                                href={`mailto:${unlockedContacts[getEntityId(c)].email}`}
+                                size="sm"
+                                variant="outline-success"
+                                className="w-100 text-break"
+                              >
+                                <i className="bi bi-envelope me-1" />
+                                {unlockedContacts[getEntityId(c)].email}
                               </Button>
                             )}
                             {unlockedContacts[getEntityId(c)].resumeUrl && (
@@ -420,7 +448,7 @@ export default function CandidateSearchPage() {
       )}
 
       {/* Profile preview modal */}
-      <Modal show={previewLoading || !!preview} onHide={() => setPreview(null)} centered size="lg">
+      <Modal show={previewLoading || !!preview} onHide={() => { setPreview(null); setPreviewCandidate(null); setPreviewCandidateId(null); }} centered size="lg">
         <Modal.Header closeButton>
           <Modal.Title className="h6">Hồ sơ ứng viên</Modal.Title>
         </Modal.Header>
@@ -447,26 +475,26 @@ export default function CandidateSearchPage() {
                 <div>
                   <h5 className="fw-bold mb-0">{preview.fullName}</h5>
                   <div className="text-muted small">
-                    {[preview.location, preview.district].filter(Boolean).join(', ') || preview.address}
+                    {previewLocation}
                   </div>
                   {preview.openToWork && <Badge bg="success">Đang tìm việc</Badge>}
                 </div>
               </div>
 
-              {preview.summary && (
+              {previewBio && (
                 <>
                   <h6 className="fw-bold">Giới thiệu</h6>
-                  <p className="small">{preview.summary}</p>
+                  <p className="small">{previewBio}</p>
                 </>
               )}
 
-              {preview.skills?.length > 0 && (
+              {previewSkills.length > 0 && (
                 <>
                   <h6 className="fw-bold mt-3">Kỹ năng</h6>
                   <div className="d-flex gap-2 flex-wrap mb-2">
-                    {preview.skills.map((s) => (
-                      <Badge bg="light" text="dark" key={getEntityId(s)}>
-                        {s.name} <span className="text-warning">{'★'.repeat(s.rating)}</span>
+                    {previewSkills.map((s, index) => (
+                      <Badge bg="light" text="dark" key={`${skillLabel(s)}-${index}`}>
+                        {skillLabel(s)} {typeof s !== 'string' && <span className="text-warning">{'★'.repeat(s.rating)}</span>}
                       </Badge>
                     ))}
                   </div>
@@ -500,6 +528,39 @@ export default function CandidateSearchPage() {
                     </div>
                   ))}
                 </>
+              )}
+
+              <div className="row g-3 mt-1">
+                <div className="col-md-5">
+                  <TrustScoreCard userId={preview.userId} />
+                </div>
+                <div className="col-md-7">
+                  <ReviewsList revieweeId={preview.userId} />
+                </div>
+              </div>
+
+              {isEmployer && previewCandidateId && (
+                <div className="border rounded p-3 mt-3 bg-light">
+                  <h6 className="fw-bold mb-2">Thông tin liên hệ</h6>
+                  {unlockedContacts[previewCandidateId] ? (
+                    <div className="small">
+                      <div><i className="bi bi-telephone me-2" />{unlockedContacts[previewCandidateId].phone ?? 'Ứng viên chưa cập nhật số điện thoại'}</div>
+                      <div className="mt-1"><i className="bi bi-envelope me-2" />{unlockedContacts[previewCandidateId].email ?? 'Ứng viên chưa cập nhật email'}</div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="small text-muted mb-2">Số điện thoại và email chỉ hiển thị sau khi mở khóa hồ sơ.</p>
+                      <Button
+                        size="sm"
+                        variant="outline-warning"
+                        disabled={unlockBusyId === previewCandidateId}
+                        onClick={() => unlockCandidate(previewCandidateId)}
+                      >
+                        {unlockBusyId === previewCandidateId ? <Spinner size="sm" /> : <><i className="bi bi-unlock me-1" />Mở khóa liên hệ ({unlockCost} credit)</>}
+                      </Button>
+                    </>
+                  )}
+                </div>
               )}
             </>
           ) : null}

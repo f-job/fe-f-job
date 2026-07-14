@@ -94,6 +94,11 @@ export interface EmployerPopulatedUser {
   status?: UserStatus;
 }
 
+export interface EmployerBranch {
+  name: string;
+  address: string;
+}
+
 export interface EmployerProfile {
   _id: string;
   id?: string;
@@ -111,6 +116,11 @@ export interface EmployerProfile {
   contactPhone?: string;
   city?: string;
   country?: string;
+  englishName?: string;
+  shortName?: string;
+  businessRegistrationNumber?: string;
+  legalRepresentative?: string;
+  branches?: EmployerBranch[];
   status: EmployerStatus;
   verifiedAt?: string;
   verifiedBy?: string;
@@ -423,7 +433,11 @@ export type NotificationType =
   | 'NEW_JOB'
   | 'SYSTEM'
   | 'SHIFT_REMINDER'
-  | 'RECRUITMENT_MESSAGE';
+  | 'RECRUITMENT_MESSAGE'
+  | 'REVIEW_RECEIVED'
+  | 'JOB_COMPLETED'
+  | 'VERIFICATION_RESULT'
+  | 'REPORT_UPDATE';
 
 export interface AppNotification {
   _id: string;

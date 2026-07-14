@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Alert,
   Badge,
@@ -11,14 +12,18 @@ import {
 } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import notificationService from '@services/notificationService';
+import { useAuthStore } from '@stores/authStore';
 import type {
   AppNotification,
   NotificationSettings,
   PaginationMeta,
 } from '@/types/api';
 import { getEntityId, getErrorMessage, notificationIcon, timeAgo } from '@utils/format';
+import { notificationLink } from '@utils/notificationLink';
 
 export default function NotificationsPage() {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [items, setItems] = useState<AppNotification[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [page, setPage] = useState(1);
@@ -78,6 +83,12 @@ export default function NotificationsPage() {
     } catch (err) {
       toast.error(getErrorMessage(err, 'Không thể xóa'));
     }
+  };
+
+  const handleOpen = async (n: AppNotification) => {
+    await handleMarkRead(n);
+    const destination = notificationLink(n, user?.role);
+    if (destination) navigate(destination);
   };
 
   const handleToggleSetting = async (key: keyof NotificationSettings, value: boolean) => {
@@ -144,8 +155,9 @@ export default function NotificationsPage() {
               <ListGroup.Item
                 key={getEntityId(n)}
                 className={`d-flex gap-3 align-items-start ${n.isRead ? '' : 'bg-light'}`}
-                onClick={() => handleMarkRead(n)}
+                onClick={() => handleOpen(n)}
                 role="button"
+                title={notificationLink(n, user?.role) ? 'Mở nội dung liên quan' : 'Đánh dấu đã đọc'}
               >
                 <i className={`bi ${notificationIcon(n.type)} fs-4 text-primary`}></i>
                 <div className="flex-grow-1">

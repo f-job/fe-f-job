@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import employerJobService from '@services/employerJobService';
 import employerApplicationService from '@services/employerApplicationService';
 import employerCandidateService from '@services/employerCandidateService';
+import ReviewFormModal from '@components/common/ReviewFormModal';
 import type {
   ApplicationStatus,
   BackendJob,
@@ -57,6 +58,7 @@ export default function EmployerJobsPage() {
   const [actingId, setActingId] = useState<string | null>(null);
   const [selectedAppIds, setSelectedAppIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [reviewingApplication, setReviewingApplication] = useState<EmployerJobApplication | null>(null);
   const refreshCost = 5;
 
   const load = useCallback(
@@ -537,6 +539,11 @@ export default function EmployerJobsPage() {
                                   </Dropdown.Item>
                                 </>
                               )}
+                              {status === 'Completed' && (
+                                <Dropdown.Item onClick={() => setReviewingApplication(a)}>
+                                  <i className="bi bi-star me-2 text-warning" />Đánh giá ứng viên
+                                </Dropdown.Item>
+                              )}
                               {!isTerminal && (
                                 <>
                                   <Dropdown.Divider />
@@ -557,6 +564,16 @@ export default function EmployerJobsPage() {
           )}
         </Modal.Body>
       </Modal>
+
+      <ReviewFormModal
+        show={!!reviewingApplication}
+        applicationId={reviewingApplication ? getEntityId(reviewingApplication) : ''}
+        title={reviewingApplication ? `Đánh giá ứng viên: ${reviewingApplication.candidateName}` : 'Đánh giá ứng viên'}
+        onClose={() => setReviewingApplication(null)}
+        onSubmitted={() => {
+          if (applicantsJob) void openApplicants(applicantsJob);
+        }}
+      />
     </Container>
   );
 }

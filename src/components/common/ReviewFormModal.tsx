@@ -34,6 +34,8 @@ interface ReviewFormModalProps {
   show: boolean;
   /** The Completed application being reviewed. */
   applicationId: string;
+  /** Contextual heading, e.g. "Đánh giá ứng viên" for employers. */
+  title?: string;
   onClose: () => void;
   /** Called after a review is successfully created (e.g. to reload the list). */
   onSubmitted?: () => void;
@@ -49,6 +51,7 @@ interface ReviewFormModalProps {
 export default function ReviewFormModal({
   show,
   applicationId,
+  title = 'Đánh giá công việc',
   onClose,
   onSubmitted,
 }: ReviewFormModalProps) {
@@ -95,7 +98,7 @@ export default function ReviewFormModal({
     <Modal show={show} onHide={onClose} centered>
       <Form onSubmit={handleSubmit}>
         <Modal.Header closeButton>
-          <Modal.Title className="h6">Đánh giá công việc</Modal.Title>
+          <Modal.Title className="h6">{title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {error && <Alert variant="danger">{error}</Alert>}

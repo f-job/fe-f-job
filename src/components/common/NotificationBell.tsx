@@ -2,14 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Dropdown, Badge, Spinner } from 'react-bootstrap';
 import notificationService from '@services/notificationService';
+import { useAuthStore } from '@stores/authStore';
 import type { AppNotification } from '@/types/api';
 import { getEntityId, notificationIcon, timeAgo } from '@utils/format';
+import { notificationLink } from '@utils/notificationLink';
 
 /** Poll interval for the unread badge (ms). */
 const POLL_MS = 60_000;
 
 export function NotificationBell() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [count, setCount] = useState(0);
   const [items, setItems] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
@@ -57,7 +60,7 @@ export function NotificationBell() {
       }
     }
     setOpen(false);
-    navigate('/thong-bao');
+    navigate(notificationLink(n, user?.role) ?? '/thong-bao');
   };
 
   return (

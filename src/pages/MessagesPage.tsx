@@ -98,13 +98,21 @@ export default function MessagesPage() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [error, setError] = useState('');
 
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messageListRef = useRef<HTMLDivElement>(null);
   const activeIdRef = useRef<string | null>(null);
   // Guard against StrictMode's double effect invocation creating two channels.
   const didInitRef = useRef(false);
 
-  const scrollToBottom = () => {
-    requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }));
+  const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
+    requestAnimationFrame(() => {
+      const messageList = messageListRef.current;
+      if (!messageList) return;
+
+      messageList.scrollTo({
+        top: messageList.scrollHeight,
+        behavior,
+      });
+    });
   };
 
   const loadConversations = useCallback(async () => {
@@ -250,9 +258,7 @@ export default function MessagesPage() {
           }
           console.log('✅✅ ADDING MESSAGE TO UI:', message.text);
           // Scroll after state update
-          requestAnimationFrame(() => {
-            bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-          });
+          scrollToBottom('smooth');
           return [...withoutOptimistic, message];
         });
         // Inbound message in the open thread → mark read immediately
@@ -322,7 +328,7 @@ export default function MessagesPage() {
     };
     
     setMessages((prev) => [...prev, optimisticMessage]);
-    scrollToBottom();
+    scrollToBottom('smooth');
     
     try {
       const socket = getChatSocket();
@@ -508,7 +514,7 @@ export default function MessagesPage() {
                   )}
                 </div>
 
-                <div className="flex-grow-1 overflow-auto p-3 bg-light">
+                <div ref={messageListRef} className="flex-grow-1 overflow-auto p-3 bg-light">
                   {loadingMsgs ? (
                     <div className="text-center py-4">
                       <Spinner size="sm" />
@@ -542,7 +548,6 @@ export default function MessagesPage() {
                       );
                     })
                   )}
-                  <div ref={bottomRef} />
                 </div>
 
                 <Form onSubmit={handleSend} className="p-3 border-top d-flex gap-2">

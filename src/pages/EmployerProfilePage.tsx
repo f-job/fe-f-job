@@ -16,6 +16,8 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import employerService from '@services/employerService';
 import { useAuthStore } from '@stores/authStore';
+import TrustScoreCard from '@components/common/TrustScoreCard';
+import ReviewsList from '@components/common/ReviewsList';
 import type { EmployerPopulatedUser, EmployerProfile, UpdateEmployerPayload } from '@/types/api';
 import {
   employerStatusLabel,
@@ -277,6 +279,17 @@ export default function EmployerProfilePage() {
               </Card>
             </Col>
           </Row>
+
+          {user?.id && (
+            <Row className="g-3 mt-1">
+              <Col lg={4}>
+                <TrustScoreCard userId={user.id} />
+              </Col>
+              <Col lg={8}>
+                <ReviewsList revieweeId={user.id} />
+              </Col>
+            </Row>
+          )}
 
           {profile.galleryImages?.length ? (
             <Card className="border-0 shadow-sm mt-3">

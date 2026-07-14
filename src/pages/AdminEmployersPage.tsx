@@ -318,6 +318,28 @@ export default function AdminEmployersPage() {
               <dd>{detail.industry ?? '—'}</dd>
               <dt>Địa chỉ</dt>
               <dd>{detail.address ?? '—'}</dd>
+              <dt>Tên tiếng Anh</dt>
+              <dd>{detail.englishName ?? '—'}</dd>
+              <dt>Tên viết tắt</dt>
+              <dd>{detail.shortName ?? '—'}</dd>
+              <dt>Mã số doanh nghiệp</dt>
+              <dd>{detail.businessRegistrationNumber ?? '—'}</dd>
+              <dt>Đại diện pháp luật</dt>
+              <dd>{detail.legalRepresentative ?? '—'}</dd>
+              <dt>Điện thoại</dt>
+              <dd>{detail.contactPhone ?? '—'}</dd>
+              <dt>Chi nhánh</dt>
+              <dd>
+                {detail.branches?.length ? (
+                  <ul className="mb-0 ps-3">
+                    {detail.branches.map((branch) => (
+                      <li key={`${branch.name}-${branch.address}`}>
+                        <strong>{branch.name}</strong> — {branch.address}
+                      </li>
+                    ))}
+                  </ul>
+                ) : '—'}
+              </dd>
               <dt>Trạng thái</dt>
               <dd>
                 <Badge bg={employerStatusVariant(detail.status)}>
