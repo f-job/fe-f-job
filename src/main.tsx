@@ -25,7 +25,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   // Temporarily disable StrictMode for debugging chat issues
   // <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <App />
         <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       </BrowserRouter>

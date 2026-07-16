@@ -51,7 +51,7 @@ const PrivacyPolicyPage = lazy(() => import('@pages/PrivacyPolicyPage'));
 const TestQRPage = lazy(() => import('@pages/TestQRPage'));
 const DebugVerificationPage = lazy(() => import('@pages/DebugVerificationPage'));
 const PostRegisterVerificationPage = lazy(() => import('@pages/PostRegisterVerificationPage'));
-
+const AdminDashboardPage = lazy(() => import('@pages/AdminDashboardPage'));
 function withSuspense(Component: React.LazyExoticComponent<() => JSX.Element>) {
   return (
     <Suspense fallback={<div className="text-center py-5">Đang tải...</div>}>
@@ -170,7 +170,7 @@ export const routes: RouteObject[] = [
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="users" replace /> },
+      { index: true, element: withSuspense(AdminDashboardPage) },
       { path: 'users', element: withSuspense(AdminUsersPage) },
       { path: 'candidates', element: withSuspense(AdminCandidatesPage) },
       { path: 'employers', element: withSuspense(AdminEmployersPage) },
