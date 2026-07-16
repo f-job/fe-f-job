@@ -1,1 +1,0 @@
-import{n as e}from"./index-Ci4H_5Hr.js";const r={verifyIdentity(i){return e.post("/verification/verify",i)},getStatus(){return e.get("/verification/status")},removeVerification(){return e.delete("/verification/remove")},getMine(){return e.get("/verification/me")},submit(i){return e.post("/verification/submit",i)}};export{r as v};

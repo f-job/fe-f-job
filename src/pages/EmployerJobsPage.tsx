@@ -16,15 +16,18 @@ import toast from 'react-hot-toast';
 import employerJobService from '@services/employerJobService';
 import employerApplicationService from '@services/employerApplicationService';
 import employerCandidateService from '@services/employerCandidateService';
+import profileService from '@services/profileService';
+import api from '@services/api';
 import ReviewFormModal from '@components/common/ReviewFormModal';
 import type {
   ApplicationStatus,
   BackendJob,
   EmployerJobApplication,
   JobStatus,
+  MyProfile,
   PaginationMeta,
 } from '@/types/api';
-import { jobStatusLabel, jobStatusVariant } from '@/types/api';
+import { jobStatusLabel, jobStatusVariant, skillLabel } from '@/types/api';
 import {
   applicationStatusLabel,
   applicationStatusVariant,
@@ -59,6 +62,9 @@ export default function EmployerJobsPage() {
   const [selectedAppIds, setSelectedAppIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [reviewingApplication, setReviewingApplication] = useState<EmployerJobApplication | null>(null);
+  const [profileApplicant, setProfileApplicant] = useState<EmployerJobApplication | null>(null);
+  const [profilePreview, setProfilePreview] = useState<MyProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
   const refreshCost = 5;
 
   const load = useCallback(
@@ -216,6 +222,60 @@ export default function EmployerJobsPage() {
         scheduledAt: scheduledAt.toISOString(),
       }),
     );
+  };
+
+  const openApplicantProfile = async (application: EmployerJobApplication) => {
+    setProfileApplicant(application);
+    setProfilePreview(null);
+    setProfileLoading(true);
+    try {
+      // Application.candidateId is the candidate's User ID, which is the ID
+      // expected by the employer-safe profile preview endpoint.
+      const { data } = await profileService.preview(application.candidateId);
+      setProfilePreview(data);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể tải hồ sơ ứng viên'));
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const closeApplicantProfile = () => {
+    setProfileApplicant(null);
+    setProfilePreview(null);
+  };
+
+  const openApplicantCv = async (resumeUrl: string) => {
+    try {
+      // CVs uploaded via the profile page require the employer's Bearer token;
+      // external CV links can be opened directly.
+      if (!resumeUrl.startsWith('/api/')) {
+        window.open(resumeUrl, '_blank', 'noopener');
+        return;
+      }
+      const { data, headers } = await api.get<Blob>(resumeUrl.slice('/api'.length), {
+        responseType: 'blob',
+      });
+      const dispositionHeader = headers['content-disposition'];
+      const disposition = typeof dispositionHeader === 'string' ? dispositionHeader : '';
+      const filenameMatch = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+      const encodedFileName = filenameMatch?.[1] ?? filenameMatch?.[2];
+      const fileName = encodedFileName ? decodeURIComponent(encodedFileName) : 'CV.pdf';
+      const contentTypeHeader = headers['content-type'];
+      const file = new Blob([data], {
+        type: typeof contentTypeHeader === 'string'
+          ? contentTypeHeader
+          : data.type || 'application/octet-stream',
+      });
+      const objectUrl = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fileName;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể mở CV ứng viên'));
+    }
   };
 
   const rejectApplicant = (application: EmployerJobApplication) => {
@@ -477,7 +537,15 @@ export default function EmployerJobsPage() {
                             onChange={() => toggleSelect(appId)}
                           />
                         </td>
-                        <td className="fw-500">{a.candidateName}</td>
+                        <td className="fw-500">
+                          <Button
+                            variant="link"
+                            className="p-0 text-start fw-500 text-decoration-none"
+                            onClick={() => void openApplicantProfile(a)}
+                          >
+                            {a.candidateName}
+                          </Button>
+                        </td>
                         <td>{a.candidatePhone ?? '—'}</td>
                         <td>
                           <Badge bg={applicationStatusVariant(status)}>
@@ -486,7 +554,9 @@ export default function EmployerJobsPage() {
                         </td>
                         <td>
                           {a.resumeUrl ? (
-                            <a href={a.resumeUrl} target="_blank" rel="noreferrer">Xem CV</a>
+                            <Button variant="link" className="p-0" onClick={() => void openApplicantCv(a.resumeUrl!)}>
+                              Tải CV
+                            </Button>
                           ) : '—'}
                         </td>
                         <td className="text-end">
@@ -495,6 +565,10 @@ export default function EmployerJobsPage() {
                               {busy ? <Spinner size="sm" /> : 'Xử lý'}
                             </Dropdown.Toggle>
                             <Dropdown.Menu renderOnMount popperConfig={{ strategy: 'fixed' }}>
+                              <Dropdown.Item onClick={() => void openApplicantProfile(a)}>
+                                <i className="bi bi-person-vcard me-2 text-primary" />Xem hồ sơ
+                              </Dropdown.Item>
+                              <Dropdown.Divider />
                               {canAccept && (
                                 <Dropdown.Item
                                   onClick={() =>
@@ -563,6 +637,132 @@ export default function EmployerJobsPage() {
             </>
           )}
         </Modal.Body>
+      </Modal>
+
+      {/* Applicant profile preview */}
+      <Modal
+        show={profileLoading || !!profileApplicant}
+        onHide={closeApplicantProfile}
+        centered
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title className="h6">Hồ sơ ứng viên</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {profileLoading ? (
+            <div className="text-center py-4"><Spinner /></div>
+          ) : profilePreview ? (
+            <>
+              <div className="d-flex align-items-center gap-3 mb-3">
+                <img
+                  src={profilePreview.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(profilePreview.fullName)}&background=random`}
+                  alt={profilePreview.fullName}
+                  className="rounded-circle"
+                  width={72}
+                  height={72}
+                  style={{ objectFit: 'cover' }}
+                />
+                <div>
+                  <h5 className="fw-bold mb-1">{profilePreview.fullName}</h5>
+                  <div className="text-muted small">
+                    {[profilePreview.location, profilePreview.district].filter(Boolean).join(', ') || profilePreview.address || 'Chưa cập nhật khu vực'}
+                  </div>
+                  {profilePreview.openToWork && <Badge bg="success" className="mt-1">Đang tìm việc</Badge>}
+                </div>
+              </div>
+
+              {(profileApplicant?.candidatePhone || profileApplicant?.resumeUrl) && (
+                <section className="border rounded bg-light p-3 mb-3">
+                  <h6 className="fw-bold mb-2">Thông tin trong đơn ứng tuyển</h6>
+                  {profileApplicant.candidatePhone && (
+                    <div className="small mb-2">
+                      <i className="bi bi-telephone me-2" />{profileApplicant.candidatePhone}
+                    </div>
+                  )}
+                  {profileApplicant.resumeUrl && (
+                    <Button size="sm" variant="outline-primary" onClick={() => void openApplicantCv(profileApplicant.resumeUrl!)}>
+                      <i className="bi bi-file-earmark-pdf me-1" />Tải CV đã gửi
+                    </Button>
+                  )}
+                </section>
+              )}
+
+              {profilePreview.summary && (
+                <section className="mb-3">
+                  <h6 className="fw-bold">Giới thiệu</h6>
+                  <p className="mb-0 small" style={{ whiteSpace: 'pre-line' }}>{profilePreview.summary}</p>
+                </section>
+              )}
+
+              {profilePreview.skills.length > 0 && (
+                <section className="mb-3">
+                  <h6 className="fw-bold">Kỹ năng</h6>
+                  <div className="d-flex gap-2 flex-wrap">
+                    {profilePreview.skills.map((skill, index) => (
+                      <Badge bg="light" text="dark" key={`${skillLabel(skill)}-${index}`}>
+                        {skillLabel(skill)}
+                        {typeof skill !== 'string' && <span className="text-warning"> {'★'.repeat(skill.rating)}</span>}
+                      </Badge>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {profilePreview.experiences.length > 0 && (
+                <section className="mb-3">
+                  <h6 className="fw-bold">Kinh nghiệm</h6>
+                  {profilePreview.experiences.map((experience) => (
+                    <div key={getEntityId(experience)} className="border-start border-3 border-primary ps-3 mb-2">
+                      <strong>{experience.role}</strong>
+                      <div className="text-muted small">{experience.companyName}</div>
+                      <div className="text-muted small">
+                        {formatDate(experience.startDate)} – {experience.endDate ? formatDate(experience.endDate) : 'Hiện tại'}
+                      </div>
+                      {experience.description && <div className="small mt-1">{experience.description}</div>}
+                    </div>
+                  ))}
+                </section>
+              )}
+
+              {profilePreview.educations.length > 0 && (
+                <section>
+                  <h6 className="fw-bold">Học vấn</h6>
+                  {profilePreview.educations.map((education) => (
+                    <div key={getEntityId(education)} className="border-start border-3 border-info ps-3 mb-2">
+                      <strong>{education.school}</strong>
+                      <div className="text-muted small">
+                        {[education.degree, education.major].filter(Boolean).join(' · ')} — {education.duration}
+                      </div>
+                    </div>
+                  ))}
+                </section>
+              )}
+
+              {!profilePreview.summary
+                && profilePreview.skills.length === 0
+                && profilePreview.experiences.length === 0
+                && profilePreview.educations.length === 0
+                && !profileApplicant?.coverLetter && (
+                  <Alert variant="info" className="mb-0">
+                    Ứng viên chưa hoàn thiện hồ sơ trực tuyến hoặc chưa gửi thư giới thiệu cho đơn ứng tuyển này.
+                  </Alert>
+                )}
+
+              {profileApplicant?.coverLetter && (
+                <section className="border-top pt-3 mt-3">
+                  <h6 className="fw-bold">Thư giới thiệu khi ứng tuyển</h6>
+                  <p className="mb-0 small" style={{ whiteSpace: 'pre-line' }}>{profileApplicant.coverLetter}</p>
+                </section>
+              )}
+            </>
+          ) : (
+            <Alert variant="danger" className="mb-0">Không tải được hồ sơ ứng viên.</Alert>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={closeApplicantProfile}>Đóng</Button>
+        </Modal.Footer>
       </Modal>
 
       <ReviewFormModal

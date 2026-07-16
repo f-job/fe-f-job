@@ -11,6 +11,7 @@ import {
   Row,
   Spinner,
 } from 'react-bootstrap';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import profileService from '@services/profileService';
 import verificationService from '@services/verificationService';
@@ -47,6 +48,22 @@ const emptyEducation: EducationForm = {
 };
 
 const VIETNAM_PHONE_RE = /^(\+84|0)[3-9]\d{8}$/;
+const ADDRESS_API_URL = 'https://production.cas.so/address-kit/2025-07-01';
+
+interface Province {
+  code: string;
+  name: string;
+}
+
+interface Commune {
+  id: number;
+  code: string;
+  name: string;
+  provinceId: number;
+}
+
+const normalizeProvinceName = (name: string) =>
+  name.replace(/^(Tỉnh|Thành phố)\s+/i, '').trim().toLocaleLowerCase('vi-VN');
 
 export default function ProfilePage() {
   const { user } = useAuthStore();
@@ -54,6 +71,10 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [savingInfo, setSavingInfo] = useState(false);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [communes, setCommunes] = useState<Commune[]>([]);
+  const [loadingCommunes, setLoadingCommunes] = useState(false);
+  const [communesError, setCommunesError] = useState('');
 
   // Verification
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -133,6 +154,43 @@ export default function ProfilePage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    axios
+      .get<{ provinces?: Province[] }>(`${ADDRESS_API_URL}/provinces`)
+      .then(({ data }) => setProvinces(data.provinces ?? []))
+      .catch(() => toast.error('Không thể tải danh sách tỉnh/thành phố.'));
+  }, []);
+
+  const selectedProvince = provinces.find(
+    (province) => normalizeProvinceName(province.name) === normalizeProvinceName(info.location),
+  );
+
+  useEffect(() => {
+    if (!selectedProvince) {
+      setCommunes([]);
+      setCommunesError('');
+      return;
+    }
+
+    setLoadingCommunes(true);
+    setCommunesError('');
+    axios
+      .get<Commune[] | { data?: Commune[]; communes?: Commune[] }>(
+        `${ADDRESS_API_URL}/provinces/${selectedProvince.code}/communes`,
+      )
+      .then(({ data }) => {
+        const list = Array.isArray(data)
+          ? data
+          : data.communes ?? data.data ?? [];
+        setCommunes(list);
+      })
+      .catch(() => {
+        setCommunes([]);
+        setCommunesError('Không thể tải danh sách xã/phường. Vui lòng thử lại.');
+      })
+      .finally(() => setLoadingCommunes(false));
+  }, [selectedProvince?.code]);
 
   const handleSaveInfo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -489,17 +547,41 @@ export default function ProfilePage() {
                   </Col>
                   <Col md={6}>
                     <Form.Label>Tỉnh / Thành phố</Form.Label>
-                    <Form.Control
-                      value={info.location}
-                      onChange={(e) => setInfo({ ...info, location: e.target.value })}
-                    />
+                    <Form.Select
+                      value={selectedProvince?.name ?? ''}
+                      disabled={provinces.length === 0}
+                      onChange={(e) => {
+                        setInfo({
+                          ...info,
+                          location: e.target.value,
+                          district: '',
+                        });
+                      }}
+                    >
+                      <option value="">-- Chọn tỉnh/thành phố --</option>
+                      {provinces.map((province) => (
+                        <option key={province.code} value={province.name}>{province.name}</option>
+                      ))}
+                    </Form.Select>
                   </Col>
                   <Col md={6}>
-                    <Form.Label>Quận / Huyện</Form.Label>
-                    <Form.Control
+                    <Form.Label>Xã / Phường</Form.Label>
+                    <Form.Select
                       value={info.district}
+                      disabled={!selectedProvince || loadingCommunes}
                       onChange={(e) => setInfo({ ...info, district: e.target.value })}
-                    />
+                    >
+                      <option value="">
+                        {loadingCommunes ? 'Đang tải xã/phường...' : '-- Chọn xã/phường --'}
+                      </option>
+                      {info.district && !communes.some((commune) => commune.name === info.district) && (
+                        <option value={info.district}>{info.district} (địa chỉ đã lưu)</option>
+                      )}
+                      {communes.map((commune) => (
+                        <option key={commune.code || commune.id} value={commune.name}>{commune.name}</option>
+                      ))}
+                    </Form.Select>
+                    {communesError && <Form.Text className="text-danger">{communesError}</Form.Text>}
                   </Col>
                   <Col xs={12}>
                     <Form.Label>Địa chỉ</Form.Label>
